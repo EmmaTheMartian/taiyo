@@ -2,6 +2,7 @@
 #define __HOSHI_DEBUG_C__
 
 #include "debug.h"
+#include "chunk.h"
 #include "config.h"
 #include <stdint.h>
 #include <stdio.h>
@@ -84,12 +85,26 @@ int hoshi_disassembleInstruction(hoshi_Chunk *chunk, int offset)
 
 	uint8_t instruction = chunk->code[offset];
 	switch (instruction) {
+		case HOSHI_OP_POP:
+			return hoshi_simpleInstruction("POP", offset);
 		case HOSHI_OP_CONSTANT:
 			return hoshi_constantInstruction("CONSTANT", chunk, offset);
 		case HOSHI_OP_CONSTANT_LONG:
 			return hoshi_longConstantInstruction("CONSTANT_LONG", chunk, offset);
+		case HOSHI_OP_ADD:
+			return hoshi_simpleInstruction("ADD", offset);
+		case HOSHI_OP_SUB:
+			return hoshi_simpleInstruction("SUB", offset);
+		case HOSHI_OP_MUL:
+			return hoshi_simpleInstruction("MUL", offset);
+		case HOSHI_OP_DIV:
+			return hoshi_simpleInstruction("DIV", offset);
+		case HOSHI_OP_NEGATE:
+			return hoshi_simpleInstruction("NEGATE", offset);
 		case HOSHI_OP_RETURN:
 			return hoshi_simpleInstruction("RETURN", offset);
+		case HOSHI_OP_EXIT:
+			return hoshi_simpleInstruction("EXIT", offset);
 		default:
 			printf("Unknown opcode: %d\n", instruction);
 			return offset + 1;

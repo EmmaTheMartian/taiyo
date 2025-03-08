@@ -13,6 +13,8 @@
 
 ```sh
 $ zig build
+# or without Zig:
+$ sh build.sh libhoshi hoshi hir
 ```
 
 That's it <3

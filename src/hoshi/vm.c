@@ -2,7 +2,10 @@
 #define __HOSHI_VM_C__
 
 #include "vm.h"
+#include "chunk.h"
+#include "value.h"
 #include <stdio.h>
+#include <stdlib.h>
 
 #if HOSHI_ENABLE_TRACE_EXECUTION_DEBUGGING
 #include "debug.h"
@@ -34,18 +37,17 @@ hoshi_Value hoshi_pop(hoshi_VM *vm)
 	return *vm->stackTop;
 }
 
-hoshi_InterpretResult hoshi_interpret(hoshi_VM *vm, hoshi_Chunk *chunk)
-{
-	vm->chunk = chunk;
-	vm->ip = vm->chunk->code;
-	return hoshi_runNext(vm);
-}
-
 hoshi_InterpretResult hoshi_runNext(hoshi_VM *vm)
 {
 /* Macro shorthands. These get #undef'ed from existence after the for loop below. */
 #define READ_BYTE() (*vm->ip++)
 #define READ_CONSTANT() (vm->chunk->constants.values[READ_BYTE()])
+#define BINARY_OP(op)\
+	do { \
+		double b = hoshi_pop(vm); \
+		double a = hoshi_pop(vm); \
+		hoshi_push(vm, a op b); \
+	} while (0)
 
 	for (;;) {
 #if HOSHI_ENABLE_TRACE_EXECUTION_DEBUGGING
@@ -54,12 +56,35 @@ hoshi_InterpretResult hoshi_runNext(hoshi_VM *vm)
 		/* Print the instruction */
 		hoshi_disassembleInstruction(vm->chunk, (int)(vm->ip - vm->chunk->code));
 #endif
+
 		uint8_t instruction;
+
 		/* Here's a switch statement in its natural habitat. They're found in all interpreters somewhere. */
 		switch (instruction = READ_BYTE()) {
+			case HOSHI_OP_POP: {
+				if (vm->stackTop == vm->stack) {
+					fputs("error: attempted to pop but stack was empty.\n", stderr);
+					exit(-1);
+				}
+				vm->stackTop--;
+				break;
+			}
 			case HOSHI_OP_CONSTANT: {
 				hoshi_Value constant = READ_CONSTANT();
 				hoshi_push(vm, constant);
+				break;
+			}
+			case HOSHI_OP_CONSTANT_LONG: {
+				hoshi_Value constant = READ_CONSTANT();
+				hoshi_push(vm, constant);
+				break;
+			}
+			case HOSHI_OP_ADD: BINARY_OP(+); break;
+			case HOSHI_OP_SUB: BINARY_OP(-); break;
+			case HOSHI_OP_MUL: BINARY_OP(*); break;
+			case HOSHI_OP_DIV: BINARY_OP(/); break;
+			case HOSHI_OP_NEGATE: {
+				*(vm->stackTop - 1) = -(*(vm->stackTop - 1));
 				break;
 			}
 			case HOSHI_OP_RETURN: {
@@ -67,11 +92,20 @@ hoshi_InterpretResult hoshi_runNext(hoshi_VM *vm)
 				puts("");
 				return HOSHI_INTERPRET_OK;
 			}
+			case HOSHI_OP_EXIT: exit(hoshi_pop(vm));
 		}
 	}
 
 #undef READ_BYTE
 #undef READ_CONSTANT
+#undef BINARY_OP
+}
+
+hoshi_InterpretResult hoshi_runChunk(hoshi_VM *vm, hoshi_Chunk *chunk)
+{
+	vm->chunk = chunk;
+	vm->ip = vm->chunk->code;
+	return hoshi_runNext(vm);
 }
 
 #endif

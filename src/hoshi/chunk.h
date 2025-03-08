@@ -22,9 +22,16 @@
 /* Enumerations */
 
 typedef enum {
+	HOSHI_OP_POP,
 	HOSHI_OP_CONSTANT,
 	HOSHI_OP_CONSTANT_LONG,
+	HOSHI_OP_ADD,
+	HOSHI_OP_SUB,
+	HOSHI_OP_MUL,
+	HOSHI_OP_DIV,
+	HOSHI_OP_NEGATE,
 	HOSHI_OP_RETURN,
+	HOSHI_OP_EXIT,
 } hoshi_OpCode;
 
 /* Structures */

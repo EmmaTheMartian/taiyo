@@ -2,6 +2,7 @@
 #define __HOSHI_CHUNK_C__
 
 #include "chunk.h"
+#include <stdio.h>
 #include <stdlib.h>
 
 void hoshi_initValueArray(hoshi_ValueArray *va)
@@ -83,11 +84,13 @@ void hoshi_writeConstant(hoshi_Chunk *chunk, hoshi_Value value, int line)
 	if (index < 256) {
 		hoshi_writeChunk(chunk, HOSHI_OP_CONSTANT, line);
 		hoshi_writeChunk(chunk, (uint8_t)index, line);
-	} else {
+	} else if (index < 0xFFFFFF) {
 		hoshi_writeChunk(chunk, HOSHI_OP_CONSTANT_LONG, line);
 		hoshi_writeChunk(chunk, (uint8_t)(index & 0xFF), line);
 		hoshi_writeChunk(chunk, (uint8_t)((index >> 8) & 0xFF), line);
 		hoshi_writeChunk(chunk, (uint8_t)((index >> 16) & 0xFF), line);
+	} else {
+		fprintf(stderr, "Attempted to create more constants than allowed in the chunk's constant pool.");
 	}
 }
 

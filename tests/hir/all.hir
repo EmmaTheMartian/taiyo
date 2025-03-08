@@ -1,0 +1,9 @@
+# tests all* operations in HIR
+# *CONSTANT_LONG is skipped
+
+40 2 add pop
+50 8 sub pop
+2 21 mul pop
+84 2 div pop
+
+0 exit

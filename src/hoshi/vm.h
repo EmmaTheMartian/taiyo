@@ -17,7 +17,7 @@ typedef enum {
 typedef struct {
 	hoshi_Chunk *chunk;
 	uint8_t *ip; /* Instruction Pointer */
-	hoshi_Value stack[HOSHI_MAX_STACK_SIZE];
+	hoshi_Value stack[HOSHI_STACK_SIZE];
 	hoshi_Value *stackTop;
 } hoshi_VM;
 
@@ -27,7 +27,7 @@ void hoshi_initVM(hoshi_VM *vm);
 void hoshi_freeVM(hoshi_VM *vm);
 void hoshi_push(hoshi_VM *vm, hoshi_Value value);
 hoshi_Value hoshi_pop(hoshi_VM *vm);
-hoshi_InterpretResult hoshi_interpret(hoshi_VM *vm, hoshi_Chunk *chunk);
 hoshi_InterpretResult hoshi_runNext(hoshi_VM *vm);
+hoshi_InterpretResult hoshi_runChunk(hoshi_VM *vm, hoshi_Chunk *chunk);
 
 #endif

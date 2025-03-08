@@ -1,0 +1,45 @@
+#ifndef __HIR_LEXER_H__
+#define __HIR_LEXER_H__
+
+typedef enum {
+	// Single-character tokens
+	HIR_TOKEN_DOT,
+	HIR_TOKEN_EQUALS,
+	HIR_TOKEN_DOLLAR,
+	// Literals
+	HIR_TOKEN_ID,
+	HIR_TOKEN_NUMBER,
+	HIR_TOKEN_STRING,
+	// Operations
+	HIR_TOKEN_POP,
+	HIR_TOKEN_ADD,
+	HIR_TOKEN_SUB,
+	HIR_TOKEN_MUL,
+	HIR_TOKEN_DIV,
+	HIR_TOKEN_NEGATE,
+	HIR_TOKEN_RETURN,
+	HIR_TOKEN_EXIT,
+	// Misc
+	HIR_TOKEN_ERROR,
+	HIR_TOKEN_EOF,
+} hir_TokenType;
+
+typedef struct {
+	hir_TokenType type;
+	const char *start;
+	int length;
+	int line;
+} hir_Token;
+
+typedef struct {
+	const char *start;
+	const char *current;
+	int line;
+} hir_Lexer;
+
+void hir_initLexer(hir_Lexer *lexer, const char *source);
+hir_Token hir_scanToken(hir_Lexer *lexer);
+void hir_printToken(hir_Token *token);
+void hir_lex(hir_Lexer *lexer);
+
+#endif

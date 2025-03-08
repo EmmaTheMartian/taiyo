@@ -1,8 +1,9 @@
-# Compiled stuffs
+# Executables and libraries
 main
-a.out
 /taiyo
 /hoshi
+/hir
+*.out
 *.exe
 *.exe~
 *.so

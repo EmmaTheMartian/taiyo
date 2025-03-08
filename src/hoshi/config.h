@@ -8,8 +8,8 @@
 	#define HOSHI_ENABLE_TRACE_EXECUTION_DEBUGGING 0
 #endif
 
-#ifndef HOSHI_MAX_STACK_SIZE
-	#define HOSHI_MAX_STACK_SIZE 256
+#ifndef HOSHI_STACK_SIZE
+	#define HOSHI_STACK_SIZE 256
 #endif
 
 /* Disassembler Configuration */
