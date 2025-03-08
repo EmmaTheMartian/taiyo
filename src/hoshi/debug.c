@@ -3,7 +3,6 @@
 
 #include "debug.h"
 #include "config.h"
-#include "hoshi.h"
 #include <stdint.h>
 #include <stdio.h>
 

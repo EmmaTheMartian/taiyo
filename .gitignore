@@ -1,5 +1,6 @@
-# Binaries for programs and plugins
+# Compiled stuffs
 main
+a.out
 /taiyo
 /hoshi
 *.exe
@@ -8,17 +9,13 @@ main
 *.dylib
 *.dll
 
-# Ignore binary output folders
-bin/
-
-# Ignore common editor/system specific metadata
+# Editors and OS things
 .DS_Store
-.idea/
 .vscode/
-*.iml
 
 # ENV
 .env
 
-# Local V install
-/v/
+# Zig
+/.zig-cache
+/zig-out

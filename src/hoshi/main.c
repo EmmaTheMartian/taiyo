@@ -1,8 +1,7 @@
 /* Configure Hoshi for debugging purposes */
 #define HOSHI_ENABLE_TRACE_EXECUTION_DEBUGGING 1
 
-#include "hoshi.c"
-#include "hoshi.h"
+#include "vm.h"
 
 int main(void) {
 	hoshi_VM vm;

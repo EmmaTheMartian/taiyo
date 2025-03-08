@@ -1,7 +1,8 @@
 #ifndef __HOSHI_DEBUG_H__
 #define __HOSHI_DEBUG_H__
 
-#include "hoshi.h"
+#include "chunk.h"
+#include "vm.h"
 
 /* Function signatures */
 
