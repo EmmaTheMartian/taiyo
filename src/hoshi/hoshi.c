@@ -83,7 +83,7 @@ void hoshi_writeChunk(hoshi_Chunk *chunk, uint8_t byte, int line)
 int hoshi_addConstant(hoshi_Chunk *chunk, hoshi_Value value)
 {
 	hoshi_writeValueArray(&chunk->constants, value);
-	return chunk->constants.count + 1;
+	return chunk->constants.count - 1;
 }
 
 void hoshi_printValue(hoshi_Value value)
