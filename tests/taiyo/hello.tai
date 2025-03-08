@@ -1,0 +1,7 @@
+// braces indicate **compile time** code
+{print "Hello, World! (at compile-time)"}
+
+// parenthesis indicate **run-time** code
+(print "Hello, World! (at run-time)")
+
+// all code in Taiyo can be compile time or run time!

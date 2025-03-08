@@ -1,0 +1,3 @@
+// hello.hir (hoshi) from hello.tai (taiyo)
+push "Hello, World!";
+call print;

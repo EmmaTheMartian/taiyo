@@ -1,0 +1,16 @@
+(struct User
+	name string
+	age int)
+
+(let users [
+	(User "Gandalf" 50000)
+	(User "Bilbo" 111)
+	(User "Frodo" 50)
+])
+
+(fun greet [user]
+	(echo "Hello, %!" [user.name]))
+
+(each [subject] {
+	(greet subject)
+})
