@@ -1,7 +1,8 @@
-#ifndef __HOSHI_DISASSEMBLER_C__
-#define __HOSHI_DISASSEMBLER_C__
+#ifndef __HOSHI_DEBUG_C__
+#define __HOSHI_DEBUG_C__
 
-#include "disassembler.h"
+#include "debug.h"
+#include "config.h"
 #include "hoshi.h"
 #include <stdint.h>
 #include <stdio.h>
@@ -53,13 +54,31 @@ static int hoshi_constantInstruction(const char *name, hoshi_Chunk *chunk, int o
 	return offset + 2;
 }
 
+static int hoshi_longConstantInstruction(const char *name, hoshi_Chunk *chunk, int offset)
+{
+	uint8_t constant = (
+		chunk->code[offset + 1] |
+		(chunk->code[offset + 2] << 8) |
+		(chunk->code[offset + 3] << 16)
+	);
+	if (constant >= chunk->constants.count) {
+		/* print a different message to indicate out of range constants */
+		printf("%-16s %4d [OOR]\n", name, constant);
+	} else {
+		printf("%-16s %4d '", name, constant);
+		hoshi_printValue(chunk->constants.values[constant]);
+		puts("'");
+	}
+	return offset + 4;
+}
+
 int hoshi_disassembleInstruction(hoshi_Chunk *chunk, int offset)
 {
 	printf("%04d ", offset);
 
 	int line = hoshi_getLine(chunk, offset);
 	if (offset > 0 && line == hoshi_getLine(chunk, offset - 1)) {
-		printf("   | ");
+		fputs("   | ", stdout);
 	} else {
 		printf("%4d ", line);
 	}
@@ -68,11 +87,28 @@ int hoshi_disassembleInstruction(hoshi_Chunk *chunk, int offset)
 	switch (instruction) {
 		case HOSHI_OP_CONSTANT:
 			return hoshi_constantInstruction("CONSTANT", chunk, offset);
+		case HOSHI_OP_CONSTANT_LONG:
+			return hoshi_longConstantInstruction("CONSTANT_LONG", chunk, offset);
 		case HOSHI_OP_RETURN:
 			return hoshi_simpleInstruction("RETURN", offset);
 		default:
 			printf("Unknown opcode: %d\n", instruction);
 			return offset + 1;
+	}
+}
+
+void hoshi_printStack(hoshi_VM *vm)
+{
+	fputs("stack: ", stdout);
+	if (vm->stackTop == vm->stack) {
+		puts("empty");
+	} else {
+		for (hoshi_Value *value = vm->stack; value < vm->stackTop; value++) {
+			fputs("[ ", stdout);
+			hoshi_printValue(*value);
+			fputs(" ]", stdout);
+		}
+		puts("");
 	}
 }
 
