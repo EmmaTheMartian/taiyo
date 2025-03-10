@@ -134,21 +134,29 @@ static hir_TokenType hir_checkKeyword(hir_Lexer *lexer, int start, int length, c
 
 static hir_TokenType hir_identifierType(hir_Lexer *lexer)
 {
-	/* Check for keywords */
+	/* Check for keywords using a trie */
 	switch (lexer->start[0]) {
+		case 'a': return hir_checkKeyword(lexer, 1, 2, "dd", HIR_TOKEN_ADD);
+		case 'd': return hir_checkKeyword(lexer, 1, 2, "iv", HIR_TOKEN_DIV);
+		case 'e': return hir_checkKeyword(lexer, 1, 3, "xit", HIR_TOKEN_EXIT);
+		case 'f': return hir_checkKeyword(lexer, 1, 4, "alse", HIR_TOKEN_FALSE);
+		case 'm': return hir_checkKeyword(lexer, 1, 2, "ul", HIR_TOKEN_MUL);
+		case 'n': {
+			switch (lexer->start[1]) {
+				case 'e': return hir_checkKeyword(lexer, 2, 4, "gate", HIR_TOKEN_NEGATE);
+				case 'i': return hir_checkKeyword(lexer, 2, 1, "l", HIR_TOKEN_NIL);
+				case 'o': return hir_checkKeyword(lexer, 2, 1, "t", HIR_TOKEN_NOT);
+			}
+		}
 		case 'p': {
 			switch (lexer->start[1]) {
 				case 'u': return hir_checkKeyword(lexer, 2, 2, "sh", HIR_TOKEN_PUSH);
 				case 'o': return hir_checkKeyword(lexer, 2, 1, "p", HIR_TOKEN_POP);
 			}
 		}
-		case 'a': return hir_checkKeyword(lexer, 1, 2, "dd", HIR_TOKEN_ADD);
-		case 's': return hir_checkKeyword(lexer, 1, 2, "ub", HIR_TOKEN_SUB);
-		case 'm': return hir_checkKeyword(lexer, 1, 2, "ul", HIR_TOKEN_MUL);
-		case 'd': return hir_checkKeyword(lexer, 1, 2, "iv", HIR_TOKEN_DIV);
-		case 'n': return hir_checkKeyword(lexer, 1, 5, "egate", HIR_TOKEN_NEGATE);
 		case 'r': return hir_checkKeyword(lexer, 1, 5, "eturn", HIR_TOKEN_RETURN);
-		case 'e': return hir_checkKeyword(lexer, 1, 3, "xit", HIR_TOKEN_EXIT);
+		case 's': return hir_checkKeyword(lexer, 1, 2, "ub", HIR_TOKEN_SUB);
+		case 't': return hir_checkKeyword(lexer, 1, 3, "rue", HIR_TOKEN_TRUE);
 	}
 	return HIR_TOKEN_ID;
 }
@@ -197,6 +205,9 @@ void hir_printToken(hir_Token *token)
 		case HIR_TOKEN_DOLLAR: fputs("DOLLAR", stdout); break;
 		// Literals
 		case HIR_TOKEN_ID: fputs("ID", stdout); break;
+		case HIR_TOKEN_TRUE: fputs("TRUE", stdout); break;
+		case HIR_TOKEN_FALSE: fputs("FALSE", stdout); break;
+		case HIR_TOKEN_NIL: fputs("NIL", stdout); break;
 		case HIR_TOKEN_NUMBER: fputs("NUMBER", stdout); break;
 		case HIR_TOKEN_STRING: fputs("STRING", stdout); break;
 		// Operations
@@ -207,6 +218,7 @@ void hir_printToken(hir_Token *token)
                 case HIR_TOKEN_MUL: fputs("MUL", stdout); break;
                 case HIR_TOKEN_DIV: fputs("DIV", stdout); break;
                 case HIR_TOKEN_NEGATE: fputs("NEGATE", stdout); break;
+                case HIR_TOKEN_NOT: fputs("NOT", stdout); break;
                 case HIR_TOKEN_RETURN: fputs("RETURN", stdout); break;
                 case HIR_TOKEN_EXIT: fputs("EXIT", stdout); break;
 		// Misc

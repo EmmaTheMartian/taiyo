@@ -74,9 +74,7 @@ static int hoshi_longConstantInstruction(const char *name, hoshi_Chunk *chunk, i
 
 static int hoshi_singleArgInstruction(const char *name, hoshi_Chunk *chunk, int offset)
 {
-	printf("%-16s      '", name);
-	hoshi_printValue(chunk->code[offset + 1]);
-	puts("'");
+	printf("%-16s      '%d'\n", name, chunk->code[offset + 1]);
 	return offset + 2;
 }
 
@@ -93,28 +91,35 @@ int hoshi_disassembleInstruction(hoshi_Chunk *chunk, int offset)
 
 	uint8_t instruction = chunk->code[offset];
 	switch (instruction) {
-		case HOSHI_OP_PUSH:
-			return hoshi_singleArgInstruction("PUSH", chunk, offset);
-		case HOSHI_OP_POP:
-			return hoshi_simpleInstruction("POP", offset);
-		case HOSHI_OP_CONSTANT:
-			return hoshi_constantInstruction("CONSTANT", chunk, offset);
-		case HOSHI_OP_CONSTANT_LONG:
-			return hoshi_longConstantInstruction("CONSTANT_LONG", chunk, offset);
-		case HOSHI_OP_ADD:
-			return hoshi_simpleInstruction("ADD", offset);
-		case HOSHI_OP_SUB:
-			return hoshi_simpleInstruction("SUB", offset);
-		case HOSHI_OP_MUL:
-			return hoshi_simpleInstruction("MUL", offset);
-		case HOSHI_OP_DIV:
-			return hoshi_simpleInstruction("DIV", offset);
-		case HOSHI_OP_NEGATE:
-			return hoshi_simpleInstruction("NEGATE", offset);
-		case HOSHI_OP_RETURN:
-			return hoshi_simpleInstruction("RETURN", offset);
-		case HOSHI_OP_EXIT:
-			return hoshi_simpleInstruction("EXIT", offset);
+		/* Stack ops */
+		case HOSHI_OP_PUSH: return hoshi_singleArgInstruction("PUSH", chunk, offset);
+		case HOSHI_OP_POP: return hoshi_simpleInstruction("POP", offset);
+		case HOSHI_OP_CONSTANT: return hoshi_constantInstruction("CONSTANT", chunk, offset);
+		case HOSHI_OP_CONSTANT_LONG: return hoshi_longConstantInstruction("CONSTANT_LONG", chunk, offset);
+		case HOSHI_OP_TRUE: return hoshi_simpleInstruction("TRUE", offset);
+		case HOSHI_OP_FALSE: return hoshi_simpleInstruction("FALSE", offset);
+		case HOSHI_OP_NIL: return hoshi_simpleInstruction("NIL", offset);
+		/* Math */
+		case HOSHI_OP_ADD: return hoshi_simpleInstruction("ADD", offset);
+		case HOSHI_OP_SUB: return hoshi_simpleInstruction("SUB", offset);
+		case HOSHI_OP_MUL: return hoshi_simpleInstruction("MUL", offset);
+		case HOSHI_OP_DIV: return hoshi_simpleInstruction("DIV", offset);
+		case HOSHI_OP_NEGATE: return hoshi_simpleInstruction("NEGATE", offset);
+		/* Booleans ops */
+		case HOSHI_OP_NOT: return hoshi_simpleInstruction("NOT", offset);
+		case HOSHI_OP_AND: return hoshi_simpleInstruction("AND", offset);
+		case HOSHI_OP_OR: return hoshi_simpleInstruction("OR", offset);
+		case HOSHI_OP_XOR: return hoshi_simpleInstruction("XOR", offset);
+		/* Comparisons */
+		case HOSHI_OP_EQ: return hoshi_simpleInstruction("EQ", offset);
+		// case HOSHI_OP_NEQ: return hoshi_simpleInstruction("NEQ", offset);
+		case HOSHI_OP_GT: return hoshi_simpleInstruction("GT", offset);
+		case HOSHI_OP_LT: return hoshi_simpleInstruction("LT", offset);
+		// case HOSHI_OP_GTEQ: return hoshi_simpleInstruction("GTEQ", offset);
+		// case HOSHI_OP_LTEQ: return hoshi_simpleInstruction("LTEQ", offset);
+		/* Misc */
+		case HOSHI_OP_RETURN: return hoshi_simpleInstruction("RETURN", offset);
+		case HOSHI_OP_EXIT: return hoshi_simpleInstruction("EXIT", offset);
 		default:
 			printf("Unknown opcode: %d\n", instruction);
 			return offset + 1;

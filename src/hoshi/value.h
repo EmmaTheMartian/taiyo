@@ -1,7 +1,32 @@
 #ifndef __HOSHI_VALUE_H__
 #define __HOSHI_VALUE_H__
 
-typedef double hoshi_Value;
+#include <stdbool.h>
+
+#define HOSHI_NUMBER(value) ((hoshi_Value){ HOSHI_TYPE_NUMBER, { .number = value } })
+#define HOSHI_BOOL(value) ((hoshi_Value){ HOSHI_TYPE_BOOL, { .boolean = value } })
+#define HOSHI_NIL() ((hoshi_Value){ HOSHI_TYPE_NIL, { .number = 0 } })
+
+#define HOSHI_AS_NUMBER(value) ((value).as.number)
+#define HOSHI_AS_BOOL(value) ((value).as.boolean)
+
+#define HOSHI_IS_NUMBER(value) ((value).type == HOSHI_TYPE_NUMBER)
+#define HOSHI_IS_BOOL(value) ((value).type == HOSHI_TYPE_BOOL)
+#define HOSHI_IS_NIL(value) ((value).type == HOSHI_TYPE_NIL)
+
+typedef enum {
+	HOSHI_TYPE_NUMBER,
+	HOSHI_TYPE_BOOL,
+	HOSHI_TYPE_NIL,
+} hoshi_ValueType;
+
+typedef struct {
+	hoshi_ValueType type;
+	union {
+		bool boolean;
+		double number;
+	} as;
+} hoshi_Value;
 
 void hoshi_printValue(hoshi_Value value);
 

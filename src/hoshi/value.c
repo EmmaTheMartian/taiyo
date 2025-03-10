@@ -6,7 +6,17 @@
 
 void hoshi_printValue(hoshi_Value value)
 {
-	printf("%g", value);
+	switch (value.type) {
+		case HOSHI_TYPE_NUMBER:
+			printf("%g", HOSHI_AS_NUMBER(value));
+			break;
+		case HOSHI_TYPE_BOOL:
+			printf(HOSHI_AS_BOOL(value) ? "true" : "false");
+			break;
+		case HOSHI_TYPE_NIL:
+			printf("nil");
+			break;
+        }
 }
 
 #endif

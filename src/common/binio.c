@@ -6,8 +6,11 @@
  * All operations read/write in big-endian.
  */
 
+#include "../hoshi/value.h"
 #include <stdint.h>
 #include <stdio.h>
+
+/* writers */
 
 void binio_fputu8(uint8_t v, FILE *file)
 {
@@ -34,6 +37,13 @@ void binio_fputd(double v, FILE *file)
 	 * for now, I'm just going to trust that this will work cross-platform. */
 	fwrite(&v, sizeof(double), 1, file);
 }
+
+void binio_fputValue(hoshi_Value value, FILE *file)
+{
+	fwrite(&value, sizeof(hoshi_Value), 1, file);
+}
+
+/* readers */
 
 uint8_t binio_freadu8(FILE *file)
 {
@@ -62,6 +72,13 @@ double binio_freadd(FILE *file)
 	 * for now, I'm just going to trust that this will work cross-platform. */
 	double data;
 	fread(&data, sizeof(double), 1, file);
+	return data;
+}
+
+hoshi_Value binio_freadValue(FILE *file)
+{
+	hoshi_Value data;
+	fread(&data, sizeof(hoshi_Value), 1, file);
 	return data;
 }
 

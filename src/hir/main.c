@@ -128,14 +128,15 @@ int main(int argc, char *argv[])
 				printDisasm = true;
 				break;
 			case 'b':
-				if (strcmp(optarg, "hoshi")) {
+				if (memcmp(optarg, "hoshi", strlen(optarg)) == 0) {
 					backend = BACKEND_HOSHI;
-				} else if (strcmp(optarg, "c")) {
+				} else if (memcmp(optarg, "c", strlen(optarg)) == 0) {
 					backend = BACKEND_C;
 				} else {
 					fputs("error: no such backend (backends: hoshi, c)", stderr);
 					quit(1);
 				}
+				break;
 			case 'C':
 				setflag(&cc);
 				break;
@@ -184,7 +185,7 @@ int main(int argc, char *argv[])
 		case RUN:
 			runFile(inputFile);
 			break;
-		case  COMPILE:
+		case COMPILE:
 			switch (backend) {
 				case BACKEND_HOSHI:
 					compileFileToHoshi(inputFile, outputFile == NULL ? "out.hoshi" : outputFile);

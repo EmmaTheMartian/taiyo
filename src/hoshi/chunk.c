@@ -194,7 +194,7 @@ bool hoshi_readChunkFromFile(hoshi_Chunk *chunk, FILE *file)
 		}
 		chunk->constants.count = constantCount;
 		for (size_t i = 0; i < constantCount; i++) {
-			hoshi_Value d = binio_freadd(file);
+			hoshi_Value d = binio_freadValue(file);
 			chunk->constants.values[i] = d;
 		}
 	}
@@ -243,7 +243,7 @@ void hoshi_writeChunkToFile(hoshi_Chunk *chunk, FILE *file)
 	/* constant pool */
 	binio_fputu16(chunk->constants.count, file);
 	for (int i = 0; i < chunk->constants.count; i++) {
-		binio_fputd(chunk->constants.values[i], file);
+		binio_fputValue(chunk->constants.values[i], file);
 	}
 	/* instructions */
 	binio_fputu32(chunk->count, file);
@@ -267,6 +267,7 @@ void hoshi_writeChunkToC(hoshi_Chunk *chunk, FILE *file)
 	}
 	fprintf(file, "};\n\nstatic hoshi_Value constants[] = {\n");
 	for (size_t i = 0; i < chunk->constants.count; i++) {
+		//FIXME
 		fprintf(file, "\t%g,\n", chunk->constants.values[i]);
 	}
 	fprintf(file, "};\n\nstatic hoshi_LineStart lines[] = {\n");
@@ -311,6 +312,7 @@ void hoshi_writeChunkToCNonHuman(hoshi_Chunk *chunk, FILE *file)
 	}
 	fprintf(file, "};static hoshi_Value b[]={");
 	for (size_t i = 0; i < chunk->constants.count; i++) {
+		//FIXME
 		fprintf(file, "%g,", chunk->constants.values[i]);
 	}
 	fprintf(file, "};static hoshi_LineStart c[]={");

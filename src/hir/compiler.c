@@ -4,6 +4,7 @@
 #include "compiler.h"
 #include "lexer.h"
 #include "config.h"
+#include "../hoshi/value.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -104,22 +105,28 @@ static void hir_emitConstant(hir_Parser *parser, hoshi_Value value)
 static void hir_number(hir_Parser *parser)
 {
 	double value = strtod(parser->previous.start, NULL);
-	hir_emitConstant(parser, value);
+	hir_emitConstant(parser, HOSHI_NUMBER(value));
 }
 
 static void hir_expression(hir_Parser *parser, hir_Lexer *lexer)
 {
 	hir_advance(parser, lexer);
 	switch (parser->previous.type) {
+		/* Values */
 		// case HIR_TOKEN_DOLLAR:
 		case HIR_TOKEN_NUMBER: hir_number(parser); break;
 		// case HIR_TOKEN_STRING: hir_number(parser); break;
+		case HIR_TOKEN_TRUE: hir_emitByte(parser, HOSHI_OP_TRUE); break;
+		case HIR_TOKEN_FALSE: hir_emitByte(parser, HOSHI_OP_FALSE); break;
+		case HIR_TOKEN_NIL: hir_emitByte(parser, HOSHI_OP_NIL); break;
+		/* Operations */
 		case HIR_TOKEN_POP: hir_emitByte(parser, HOSHI_OP_POP); break;
 		case HIR_TOKEN_ADD: hir_emitByte(parser, HOSHI_OP_ADD); break;
 		case HIR_TOKEN_SUB: hir_emitByte(parser, HOSHI_OP_SUB); break;
 		case HIR_TOKEN_MUL: hir_emitByte(parser, HOSHI_OP_MUL); break;
 		case HIR_TOKEN_DIV: hir_emitByte(parser, HOSHI_OP_DIV); break;
 		case HIR_TOKEN_NEGATE: hir_emitByte(parser, HOSHI_OP_NEGATE); break;
+		case HIR_TOKEN_NOT: hir_emitByte(parser, HOSHI_OP_NOT); break;
 		case HIR_TOKEN_RETURN: hir_emitByte(parser, HOSHI_OP_RETURN); break;
 		case HIR_TOKEN_EXIT: hir_emitByte(parser, HOSHI_OP_EXIT); break;
 		default: break;

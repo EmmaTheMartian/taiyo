@@ -24,15 +24,33 @@
 /* Enumerations */
 
 typedef enum {
+	/* Stack ops */
 	HOSHI_OP_PUSH,
 	HOSHI_OP_POP,
 	HOSHI_OP_CONSTANT,
 	HOSHI_OP_CONSTANT_LONG,
+	HOSHI_OP_TRUE,
+	HOSHI_OP_FALSE,
+	HOSHI_OP_NIL,
+	/* Math */
 	HOSHI_OP_ADD,
 	HOSHI_OP_SUB,
 	HOSHI_OP_MUL,
 	HOSHI_OP_DIV,
 	HOSHI_OP_NEGATE,
+	/* Boolean ops */
+	HOSHI_OP_NOT,
+	HOSHI_OP_AND,
+	HOSHI_OP_OR,
+	HOSHI_OP_XOR,
+	/* Comparisons */
+	HOSHI_OP_EQ,
+	// HOSHI_OP_NEQ,
+	HOSHI_OP_GT,
+	HOSHI_OP_LT,
+	// HOSHI_OP_GTEQ,
+	// HOSHI_OP_LTEQ,
+	/* Misc */
 	HOSHI_OP_RETURN,
 	HOSHI_OP_EXIT,
 } hoshi_OpCode;

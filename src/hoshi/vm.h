@@ -25,6 +25,7 @@ typedef struct {
 
 void hoshi_initVM(hoshi_VM *vm);
 void hoshi_freeVM(hoshi_VM *vm);
+void hoshi_panic(hoshi_VM *vm, const char *format, ...);
 void hoshi_push(hoshi_VM *vm, hoshi_Value value);
 hoshi_Value hoshi_pop(hoshi_VM *vm);
 hoshi_InterpretResult hoshi_runNext(hoshi_VM *vm);

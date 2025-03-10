@@ -4,6 +4,7 @@
 #include "vm.h"
 #include "chunk.h"
 #include "value.h"
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -25,6 +26,20 @@ void hoshi_freeVM(hoshi_VM *vm)
 {
 }
 
+void hoshi_panic(hoshi_VM *vm, const char *format, ...)
+{
+	va_list args;
+	va_start(args, format);
+	vfprintf(stderr, format, args);
+	va_end(args);
+	fputs("\n", stderr);
+
+	size_t instruction = vm->ip - vm->chunk->code - 1;
+	int line = hoshi_getLine(vm->chunk, instruction);
+	fprintf(stderr, "[line %d] in script\n", line);
+	hoshi_resetStack(vm);
+}
+
 void hoshi_push(hoshi_VM *vm, hoshi_Value value)
 {
 	*vm->stackTop = value;
@@ -37,16 +52,25 @@ hoshi_Value hoshi_pop(hoshi_VM *vm)
 	return *vm->stackTop;
 }
 
+hoshi_Value hoshi_peek(hoshi_VM *vm, int distance)
+{
+	return vm->stackTop[-1 - distance];
+}
+
 hoshi_InterpretResult hoshi_runNext(hoshi_VM *vm)
 {
 /* Macro shorthands. These get #undef'ed from existence after the for loop below. */
 #define READ_BYTE() (*vm->ip++)
 #define READ_CONSTANT() (vm->chunk->constants.values[READ_BYTE()])
-#define BINARY_OP(op)\
+#define BINARY_OP(valueType, op)\
 	do { \
-		double b = hoshi_pop(vm); \
-		double a = hoshi_pop(vm); \
-		hoshi_push(vm, a op b); \
+		if (!HOSHI_IS_NUMBER(hoshi_peek(vm, 0)) || !HOSHI_IS_NUMBER(hoshi_peek(vm, 1))) {\
+			hoshi_panic(vm, "operands must be numbers."); \
+			return HOSHI_INTERPRET_RUNTIME_ERROR; \
+		} \
+		double b = HOSHI_AS_NUMBER(hoshi_pop(vm)); \
+		double a = HOSHI_AS_NUMBER(hoshi_pop(vm)); \
+		hoshi_push(vm, valueType(a op b)); \
 	} while (0)
 
 	for (;;) {
@@ -62,7 +86,9 @@ hoshi_InterpretResult hoshi_runNext(hoshi_VM *vm)
 		/* Here's a switch statement in its natural habitat. They're found in all interpreters somewhere. */
 		switch (instruction = READ_BYTE()) {
 			case HOSHI_OP_PUSH: {
-				hoshi_push(vm, READ_BYTE());
+				hoshi_panic(vm, "push unimplemented.");
+			// 	hoshi_Value it = READ_BYTE();
+			// 	hoshi_push(vm, );
 				break;
 			}
 			case HOSHI_OP_POP: {
@@ -83,12 +109,27 @@ hoshi_InterpretResult hoshi_runNext(hoshi_VM *vm)
 				hoshi_push(vm, constant);
 				break;
 			}
-			case HOSHI_OP_ADD: BINARY_OP(+); break;
-			case HOSHI_OP_SUB: BINARY_OP(-); break;
-			case HOSHI_OP_MUL: BINARY_OP(*); break;
-			case HOSHI_OP_DIV: BINARY_OP(/); break;
+			case HOSHI_OP_TRUE: hoshi_push(vm, HOSHI_BOOL(true)); break;
+			case HOSHI_OP_FALSE: hoshi_push(vm, HOSHI_BOOL(false)); break;
+			case HOSHI_OP_NIL: hoshi_push(vm, HOSHI_NIL()); break;
+			case HOSHI_OP_ADD: BINARY_OP(HOSHI_NUMBER, +); break;
+			case HOSHI_OP_SUB: BINARY_OP(HOSHI_NUMBER, -); break;
+			case HOSHI_OP_MUL: BINARY_OP(HOSHI_NUMBER, *); break;
+			case HOSHI_OP_DIV: BINARY_OP(HOSHI_NUMBER, /); break;
 			case HOSHI_OP_NEGATE: {
-				*(vm->stackTop - 1) = -(*(vm->stackTop - 1));
+				if (!HOSHI_IS_NUMBER(hoshi_peek(vm, 0))) {
+					hoshi_panic(vm, "operand must be a number");
+					return HOSHI_INTERPRET_RUNTIME_ERROR;
+				}
+				*(vm->stackTop - 1) = HOSHI_NUMBER(-HOSHI_AS_NUMBER(*(vm->stackTop - 1)));
+				break;
+			}
+			case HOSHI_OP_NOT: {
+				if (!HOSHI_IS_BOOL(hoshi_peek(vm, 0))) {
+					hoshi_panic(vm, "operand must be a boolean");
+					return HOSHI_INTERPRET_RUNTIME_ERROR;
+				}
+				*(vm->stackTop - 1) = HOSHI_BOOL(!HOSHI_AS_BOOL(*(vm->stackTop - 1)));
 				break;
 			}
 			case HOSHI_OP_RETURN: {
@@ -96,7 +137,13 @@ hoshi_InterpretResult hoshi_runNext(hoshi_VM *vm)
 				puts("");
 				return HOSHI_INTERPRET_OK;
 			}
-			case HOSHI_OP_EXIT: exit(hoshi_pop(vm));
+			case HOSHI_OP_EXIT: {
+				if (!HOSHI_IS_NUMBER(hoshi_peek(vm, 0))) {
+					hoshi_panic(vm, "operand must be a number");
+					return HOSHI_INTERPRET_RUNTIME_ERROR;
+				}
+				exit(HOSHI_AS_NUMBER(hoshi_pop(vm)));
+			};
 		}
 	}
 
