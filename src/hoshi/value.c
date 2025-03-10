@@ -19,4 +19,19 @@ void hoshi_printValue(hoshi_Value value)
         }
 }
 
+bool hoshi_valuesEqual(hoshi_Value a, hoshi_Value b)
+{
+	if (a.type != b.type) {
+		return false;
+	}
+	switch (a.type) {
+		case HOSHI_TYPE_NUMBER:
+			return HOSHI_AS_NUMBER(a) == HOSHI_AS_NUMBER(b);
+		case HOSHI_TYPE_NIL:
+			return true;
+		case HOSHI_TYPE_BOOL:
+			return HOSHI_AS_BOOL(a) == HOSHI_AS_BOOL(b);
+	}
+}
+
 #endif

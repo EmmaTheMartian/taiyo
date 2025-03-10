@@ -72,6 +72,16 @@ hoshi_InterpretResult hoshi_runNext(hoshi_VM *vm)
 		double a = HOSHI_AS_NUMBER(hoshi_pop(vm)); \
 		hoshi_push(vm, valueType(a op b)); \
 	} while (0)
+#define BINARY_BOOL_OP(op)\
+	do { \
+		if (!HOSHI_IS_BOOL(hoshi_peek(vm, 0)) || !HOSHI_IS_BOOL(hoshi_peek(vm, 1))) {\
+			hoshi_panic(vm, "operands must be booleans."); \
+			return HOSHI_INTERPRET_RUNTIME_ERROR; \
+		} \
+		bool b = HOSHI_AS_BOOL(hoshi_pop(vm)); \
+		bool a = HOSHI_AS_BOOL(hoshi_pop(vm)); \
+		hoshi_push(vm, HOSHI_BOOL(a op b)); \
+	} while (0)
 
 	for (;;) {
 #if HOSHI_ENABLE_TRACE_EXECUTION_DEBUGGING
@@ -85,6 +95,7 @@ hoshi_InterpretResult hoshi_runNext(hoshi_VM *vm)
 
 		/* Here's a switch statement in its natural habitat. They're found in all interpreters somewhere. */
 		switch (instruction = READ_BYTE()) {
+			/* Stack ops */
 			case HOSHI_OP_PUSH: {
 				hoshi_panic(vm, "push unimplemented.");
 			// 	hoshi_Value it = READ_BYTE();
@@ -112,6 +123,7 @@ hoshi_InterpretResult hoshi_runNext(hoshi_VM *vm)
 			case HOSHI_OP_TRUE: hoshi_push(vm, HOSHI_BOOL(true)); break;
 			case HOSHI_OP_FALSE: hoshi_push(vm, HOSHI_BOOL(false)); break;
 			case HOSHI_OP_NIL: hoshi_push(vm, HOSHI_NIL()); break;
+			/* Math */
 			case HOSHI_OP_ADD: BINARY_OP(HOSHI_NUMBER, +); break;
 			case HOSHI_OP_SUB: BINARY_OP(HOSHI_NUMBER, -); break;
 			case HOSHI_OP_MUL: BINARY_OP(HOSHI_NUMBER, *); break;
@@ -124,6 +136,7 @@ hoshi_InterpretResult hoshi_runNext(hoshi_VM *vm)
 				*(vm->stackTop - 1) = HOSHI_NUMBER(-HOSHI_AS_NUMBER(*(vm->stackTop - 1)));
 				break;
 			}
+			/* Boolean ops */
 			case HOSHI_OP_NOT: {
 				if (!HOSHI_IS_BOOL(hoshi_peek(vm, 0))) {
 					hoshi_panic(vm, "operand must be a boolean");
@@ -132,6 +145,23 @@ hoshi_InterpretResult hoshi_runNext(hoshi_VM *vm)
 				*(vm->stackTop - 1) = HOSHI_BOOL(!HOSHI_AS_BOOL(*(vm->stackTop - 1)));
 				break;
 			}
+			case HOSHI_OP_AND: BINARY_BOOL_OP(&&); break;
+			case HOSHI_OP_OR: BINARY_BOOL_OP(||); break;
+			case HOSHI_OP_XOR: BINARY_BOOL_OP(^); break;
+			/* Comparisons */
+			case HOSHI_OP_EQ: {
+				hoshi_push(vm, HOSHI_BOOL(hoshi_valuesEqual(hoshi_pop(vm), hoshi_pop(vm))));
+				break;
+			}
+			case HOSHI_OP_NEQ: {
+				hoshi_push(vm, HOSHI_BOOL(!hoshi_valuesEqual(hoshi_pop(vm), hoshi_pop(vm))));
+				break;
+			}
+			case HOSHI_OP_GT: BINARY_OP(HOSHI_BOOL, >); break;
+			case HOSHI_OP_LT: BINARY_OP(HOSHI_BOOL, <); break;
+			case HOSHI_OP_GTEQ: BINARY_OP(HOSHI_BOOL, >=); break;
+			case HOSHI_OP_LTEQ: BINARY_OP(HOSHI_BOOL, <=); break;
+			/* Misc */
 			case HOSHI_OP_RETURN: {
 				hoshi_printValue(hoshi_pop(vm));
 				puts("");
@@ -150,6 +180,7 @@ hoshi_InterpretResult hoshi_runNext(hoshi_VM *vm)
 #undef READ_BYTE
 #undef READ_CONSTANT
 #undef BINARY_OP
+#undef BINARY_BOOL_OP
 }
 
 hoshi_InterpretResult hoshi_runChunk(hoshi_VM *vm, hoshi_Chunk *chunk)

@@ -1,6 +1,7 @@
 /* HIR - A **very** minimalist front-end for Hoshi, literally Hoshi ASM. */
 
 #include "../common/fileio.c"
+#include "../common/thirdparty/asprintf.h"
 #include "compiler.h"
 #include "../hoshi/debug.h"
 #include <stdio.h>

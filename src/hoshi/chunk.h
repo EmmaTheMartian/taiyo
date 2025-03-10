@@ -45,11 +45,11 @@ typedef enum {
 	HOSHI_OP_XOR,
 	/* Comparisons */
 	HOSHI_OP_EQ,
-	// HOSHI_OP_NEQ,
+	HOSHI_OP_NEQ,
 	HOSHI_OP_GT,
 	HOSHI_OP_LT,
-	// HOSHI_OP_GTEQ,
-	// HOSHI_OP_LTEQ,
+	HOSHI_OP_GTEQ,
+	HOSHI_OP_LTEQ,
 	/* Misc */
 	HOSHI_OP_RETURN,
 	HOSHI_OP_EXIT,

@@ -127,9 +127,19 @@ static void hir_expression(hir_Parser *parser, hir_Lexer *lexer)
 		case HIR_TOKEN_DIV: hir_emitByte(parser, HOSHI_OP_DIV); break;
 		case HIR_TOKEN_NEGATE: hir_emitByte(parser, HOSHI_OP_NEGATE); break;
 		case HIR_TOKEN_NOT: hir_emitByte(parser, HOSHI_OP_NOT); break;
+		case HIR_TOKEN_AND: hir_emitByte(parser, HOSHI_OP_AND); break;
+		case HIR_TOKEN_OR: hir_emitByte(parser, HOSHI_OP_OR); break;
+		case HIR_TOKEN_XOR: hir_emitByte(parser, HOSHI_OP_XOR); break;
+		case HIR_TOKEN_EQ: hir_emitByte(parser, HOSHI_OP_EQ); break;
+		case HIR_TOKEN_NEQ: hir_emitByte(parser, HOSHI_OP_NEQ); break;
+		case HIR_TOKEN_GT: hir_emitByte(parser, HOSHI_OP_GT); break;
+		case HIR_TOKEN_LT: hir_emitByte(parser, HOSHI_OP_LT); break;
+		case HIR_TOKEN_GTEQ: hir_emitByte(parser, HOSHI_OP_GTEQ); break;
+		case HIR_TOKEN_LTEQ: hir_emitByte(parser, HOSHI_OP_LTEQ); break;
 		case HIR_TOKEN_RETURN: hir_emitByte(parser, HOSHI_OP_RETURN); break;
 		case HIR_TOKEN_EXIT: hir_emitByte(parser, HOSHI_OP_EXIT); break;
-		default: break;
+		default:
+			fprintf(stderr, "parser error: invalid token type for expression: %d (this error should never occur, please report it)\n", parser->previous.type);
         }
 }
 

@@ -2,7 +2,6 @@
 #define __HOSHI_CHUNK_C__
 
 #include "chunk.h"
-#include "memory.h"
 #include "value.h"
 #include "common.h"
 #include "../common/binio.c"

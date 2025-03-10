@@ -29,5 +29,6 @@ typedef struct {
 } hoshi_Value;
 
 void hoshi_printValue(hoshi_Value value);
+bool hoshi_valuesEqual(hoshi_Value a, hoshi_Value b);
 
 #endif

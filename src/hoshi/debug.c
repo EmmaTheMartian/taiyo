@@ -112,11 +112,11 @@ int hoshi_disassembleInstruction(hoshi_Chunk *chunk, int offset)
 		case HOSHI_OP_XOR: return hoshi_simpleInstruction("XOR", offset);
 		/* Comparisons */
 		case HOSHI_OP_EQ: return hoshi_simpleInstruction("EQ", offset);
-		// case HOSHI_OP_NEQ: return hoshi_simpleInstruction("NEQ", offset);
+		case HOSHI_OP_NEQ: return hoshi_simpleInstruction("NEQ", offset);
 		case HOSHI_OP_GT: return hoshi_simpleInstruction("GT", offset);
 		case HOSHI_OP_LT: return hoshi_simpleInstruction("LT", offset);
-		// case HOSHI_OP_GTEQ: return hoshi_simpleInstruction("GTEQ", offset);
-		// case HOSHI_OP_LTEQ: return hoshi_simpleInstruction("LTEQ", offset);
+		case HOSHI_OP_GTEQ: return hoshi_simpleInstruction("GTEQ", offset);
+		case HOSHI_OP_LTEQ: return hoshi_simpleInstruction("LTEQ", offset);
 		/* Misc */
 		case HOSHI_OP_RETURN: return hoshi_simpleInstruction("RETURN", offset);
 		case HOSHI_OP_EXIT: return hoshi_simpleInstruction("EXIT", offset);

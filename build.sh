@@ -29,6 +29,7 @@ hir_sources="
 	src/hir/main.c
 	src/hir/compiler.c
 	src/hir/lexer.c
+	src/common/thirdparty/asprintf.c
 	./libhoshi.so"
 
 cc () {
