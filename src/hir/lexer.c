@@ -146,6 +146,7 @@ static hir_TokenType hir_operatorType(hir_Lexer *lexer)
 			}
 			break;
 		}
+		case 'c': return hir_checkKeyword(lexer, 1, 5, "oncat", HIR_TOKEN_CONCAT);
 		case 'd': return hir_checkKeyword(lexer, 1, 2, "iv", HIR_TOKEN_DIV);
 		case 'e': {
 			if (lexer->current - lexer->start > 1) {
@@ -280,6 +281,7 @@ void hir_printToken(hir_Token *token)
 		case HIR_TOKEN_LT: fputs("LT", stdout); break;
 		case HIR_TOKEN_GTEQ: fputs("GTEQ", stdout); break;
 		case HIR_TOKEN_LTEQ: fputs("LTEQ", stdout); break;
+		case HIR_TOKEN_CONCAT: fputs("CONCAT", stdout); break;
                 case HIR_TOKEN_RETURN: fputs("RETURN", stdout); break;
                 case HIR_TOKEN_EXIT: fputs("EXIT", stdout); break;
 		// Misc

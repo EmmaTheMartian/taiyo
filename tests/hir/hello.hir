@@ -1,4 +1,6 @@
-true not true and
-40 2
-add
-exit
+"Hello"
+", "     concat
+"World"  concat
+"!"      concat
+
+42 exit

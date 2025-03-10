@@ -2,7 +2,9 @@
 #define __HOSHI_VALUE_C__
 
 #include "value.h"
+#include "object.h"
 #include <stdio.h>
+#include <string.h>
 
 void hoshi_printValue(hoshi_Value value)
 {
@@ -15,6 +17,9 @@ void hoshi_printValue(hoshi_Value value)
 			break;
 		case HOSHI_TYPE_NIL:
 			printf("nil");
+			break;
+		case HOSHI_TYPE_OBJECT:
+			hoshi_printObject(value);
 			break;
         }
 }
@@ -31,6 +36,13 @@ bool hoshi_valuesEqual(hoshi_Value a, hoshi_Value b)
 			return true;
 		case HOSHI_TYPE_BOOL:
 			return HOSHI_AS_BOOL(a) == HOSHI_AS_BOOL(b);
+		case HOSHI_TYPE_OBJECT: {
+			hoshi_ObjectString *aString = HOSHI_AS_STRING(a);
+			hoshi_ObjectString *bString = HOSHI_AS_STRING(b);
+			return
+				aString->length == bString->length &&
+				memcmp(aString->chars, bString->chars, aString->length) == 0;
+		}
 	}
 }
 

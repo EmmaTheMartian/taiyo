@@ -11,6 +11,7 @@ libhoshi_sources="
 	src/hoshi/chunk.c
 	src/hoshi/debug.c
 	src/hoshi/memory.c
+	src/hoshi/object.c
 	src/hoshi/value.c
 	src/hoshi/vm.c"
 

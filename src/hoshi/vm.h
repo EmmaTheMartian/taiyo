@@ -19,6 +19,7 @@ typedef struct {
 	uint8_t *ip; /* Instruction Pointer */
 	hoshi_Value stack[HOSHI_STACK_SIZE];
 	hoshi_Value *stackTop;
+	int exitCode;
 } hoshi_VM;
 
 /* Function signatures */

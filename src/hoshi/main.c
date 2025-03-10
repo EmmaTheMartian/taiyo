@@ -114,7 +114,6 @@ int main(int argc, char *argv[])
 		quit(2);
 	}
 
-
 	switch (mode) {
 		case NONE:
 			fputs("error: no mode specified. pass --help for usage.\n", stderr);
@@ -157,9 +156,12 @@ static void runFile(const char *path)
 	hoshi_runChunk(&vm, &chunk);
 
 	/* Cleanup */
-	hoshi_freeVM(&vm);
+	int code = vm.exitCode;
 	hoshi_freeChunk(&chunk);
+	hoshi_freeVM(&vm);
 	free(source);
+
+	quit(code);
 }
 
 static void disassembleFile(const char *path)

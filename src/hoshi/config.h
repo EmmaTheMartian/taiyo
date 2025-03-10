@@ -12,6 +12,12 @@
 	#define HOSHI_STACK_SIZE 256
 #endif
 
+#ifndef HOSHI_COUNT_LEAKED_BYTES
+	/* When true, the hoshi_realloc() function in memory.c will count bytes to ensure no memory is leaked.
+	 * This does come with a very very minor performance toll, but being able to track down leaked memory is absolutely worth it. */
+	#define HOSHI_COUNT_LEAKED_BYTES 1
+#endif
+
 /* Disassembler Configuration */
 
 #ifndef HOSHI_DISASSEMBLER_ENABLE_RAW_CODE_DUMP

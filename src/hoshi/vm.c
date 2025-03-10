@@ -4,9 +4,10 @@
 #include "vm.h"
 #include "chunk.h"
 #include "value.h"
+#include "object.h"
 #include <stdarg.h>
 #include <stdio.h>
-#include <stdlib.h>
+#include <string.h>
 
 #if HOSHI_ENABLE_TRACE_EXECUTION_DEBUGGING
 #include "debug.h"
@@ -20,10 +21,16 @@ static void hoshi_resetStack(hoshi_VM *vm)
 void hoshi_initVM(hoshi_VM *vm)
 {
 	hoshi_resetStack(vm);
+	vm->exitCode = 0;
 }
+
+extern size_t hoshi_leakedBytes;
 
 void hoshi_freeVM(hoshi_VM *vm)
 {
+	#if HOSHI_COUNT_LEAKED_BYTES
+	printf("Leaked bytes: %zu\n", hoshi_leakedBytes);
+	#endif
 }
 
 void hoshi_panic(hoshi_VM *vm, const char *format, ...)
@@ -55,6 +62,21 @@ hoshi_Value hoshi_pop(hoshi_VM *vm)
 hoshi_Value hoshi_peek(hoshi_VM *vm, int distance)
 {
 	return vm->stackTop[-1 - distance];
+}
+
+static void hoshi_concatenate(hoshi_VM *vm)
+{
+	hoshi_ObjectString *b = HOSHI_AS_STRING(hoshi_pop(vm));
+	hoshi_ObjectString *a = HOSHI_AS_STRING(hoshi_pop(vm));
+
+	int length = a->length + b->length;
+	char *chars = HOSHI_ALLOCATE(char, length + 1);
+	memcpy(chars, a->chars, a->length);
+	memcpy(chars + a->length, b->chars, b->length);
+	chars[length] = '\0';
+
+	hoshi_ObjectString *result = hoshi_takeString(chars, length);
+	hoshi_push(vm, HOSHI_OBJECT(result));
 }
 
 hoshi_InterpretResult hoshi_runNext(hoshi_VM *vm)
@@ -104,8 +126,8 @@ hoshi_InterpretResult hoshi_runNext(hoshi_VM *vm)
 			}
 			case HOSHI_OP_POP: {
 				if (vm->stackTop == vm->stack) {
-					fputs("error: attempted to pop but stack was empty.\n", stderr);
-					exit(-1);
+					hoshi_panic(vm, "error: attempted to pop but stack was empty");
+					return HOSHI_INTERPRET_RUNTIME_ERROR;
 				}
 				vm->stackTop--;
 				break;
@@ -161,6 +183,14 @@ hoshi_InterpretResult hoshi_runNext(hoshi_VM *vm)
 			case HOSHI_OP_LT: BINARY_OP(HOSHI_BOOL, <); break;
 			case HOSHI_OP_GTEQ: BINARY_OP(HOSHI_BOOL, >=); break;
 			case HOSHI_OP_LTEQ: BINARY_OP(HOSHI_BOOL, <=); break;
+			/* String ops */
+			case HOSHI_OP_CONCAT: {
+				if (!HOSHI_IS_STRING(hoshi_peek(vm, 0)) || !HOSHI_IS_STRING(hoshi_peek(vm, 1))) {
+					hoshi_panic(vm, "operands must be strings");
+				}
+				hoshi_concatenate(vm);
+				break;
+			}
 			/* Misc */
 			case HOSHI_OP_RETURN: {
 				hoshi_printValue(hoshi_pop(vm));
@@ -172,10 +202,13 @@ hoshi_InterpretResult hoshi_runNext(hoshi_VM *vm)
 					hoshi_panic(vm, "operand must be a number");
 					return HOSHI_INTERPRET_RUNTIME_ERROR;
 				}
-				exit(HOSHI_AS_NUMBER(hoshi_pop(vm)));
+				vm->exitCode = HOSHI_AS_NUMBER(hoshi_pop(vm));
+				return HOSHI_INTERPRET_OK;
 			};
 		}
 	}
+
+	return HOSHI_INTERPRET_OK;
 
 #undef READ_BYTE
 #undef READ_CONSTANT

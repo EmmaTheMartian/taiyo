@@ -117,6 +117,8 @@ int hoshi_disassembleInstruction(hoshi_Chunk *chunk, int offset)
 		case HOSHI_OP_LT: return hoshi_simpleInstruction("LT", offset);
 		case HOSHI_OP_GTEQ: return hoshi_simpleInstruction("GTEQ", offset);
 		case HOSHI_OP_LTEQ: return hoshi_simpleInstruction("LTEQ", offset);
+		/* String ops */
+		case HOSHI_OP_CONCAT: return hoshi_simpleInstruction("CONCAT", offset);
 		/* Misc */
 		case HOSHI_OP_RETURN: return hoshi_simpleInstruction("RETURN", offset);
 		case HOSHI_OP_EXIT: return hoshi_simpleInstruction("EXIT", offset);

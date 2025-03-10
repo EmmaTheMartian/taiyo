@@ -241,6 +241,7 @@ static void runFile(const char *path)
 	hoshi_InterpretResult result = hoshi_runChunk(&vm, &chunk);
 
 	/* Clean up */
+	int code = vm.exitCode;
 	hoshi_freeChunk(&chunk);
 	hoshi_freeVM(&vm);
 	free(source);
@@ -248,7 +249,7 @@ static void runFile(const char *path)
 	switch (result) {
 		case HOSHI_INTERPRET_RUNTIME_ERROR: quit(70);
 		case HOSHI_INTERPRET_COMPILE_ERROR: quit(65);
-                default: break;
+                default: quit(code);
 	}
 }
 
