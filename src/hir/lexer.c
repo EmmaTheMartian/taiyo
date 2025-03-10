@@ -136,9 +136,11 @@ static hir_TokenType hir_identifierType(hir_Lexer *lexer)
 {
 	/* Check for keywords */
 	switch (lexer->start[0]) {
-		case 'p': switch (lexer->start[1]) {
-			case 'u': return hir_checkKeyword(lexer, 1, 2, "sh", HIR_TOKEN_PUSH);
-			case 'o': return hir_checkKeyword(lexer, 1, 1, "p", HIR_TOKEN_POP);
+		case 'p': {
+			switch (lexer->start[1]) {
+				case 'u': return hir_checkKeyword(lexer, 2, 2, "sh", HIR_TOKEN_PUSH);
+				case 'o': return hir_checkKeyword(lexer, 2, 1, "p", HIR_TOKEN_POP);
+			}
 		}
 		case 'a': return hir_checkKeyword(lexer, 1, 2, "dd", HIR_TOKEN_ADD);
 		case 's': return hir_checkKeyword(lexer, 1, 2, "ub", HIR_TOKEN_SUB);
