@@ -21,7 +21,7 @@
 
 #ifndef HOSHI_DISASSEMBLER_ENABLE_CONSTANT_DUMP
 	/* Set to `1` to enable a raw dump of all constants in the disassembler. */
-	#define HOSHI_DISASSEMBLER_ENABLE_CONSTANT_DUMP 0
+	#define HOSHI_DISASSEMBLER_ENABLE_CONSTANT_DUMP 1
 #endif
 
 #endif

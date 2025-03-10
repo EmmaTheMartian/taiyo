@@ -1,17 +1,35 @@
 # Hoshi Operations
 
-| Name            | C Name                   | HIR      | Pop->Push | Link                   |
-| --------------- | ------------------------ | -------- | --------- | ---------------------- |
-| `POP`           | `HOSHI_OP_POP`           | `pop`    | 1->0      | [more](#pop)           |
-| `CONSTANT`      | `HOSHI_OP_CONSTANT`      | n/a      | 1->1      | [more](#constant)      |
-| `CONSTANT_LONG` | `HOSHI_OP_CONSTANT_LONG` | n/a      | 3->1      | [more](#constant_long) |
-| `ADD`           | `HOSHI_OP_ADD`           | `add`    | 2->1      | [more](#add)           |
-| `SUB`           | `HOSHI_OP_SUB`           | `sub`    | 2->1      | [more](#sub)           |
-| `MUL`           | `HOSHI_OP_MUL`           | `mul`    | 2->1      | [more](#mul)           |
-| `DIV`           | `HOSHI_OP_DIV`           | `div`    | 2->1      | [more](#div)           |
-| `NEGATE`        | `HOSHI_OP_NEGATE`        | `negate` | 1->1      | [more](#negate)        |
-| `RETURN`        | `HOSHI_OP_RETURN`        | `return` | 1->0      | [more](#return)        |
-| `EXIT`          | `HOSHI_OP_RETURN`        | `exit`   | 1->0      | [more](#exit)          |
+| Name            | C                        | HIR      | Args | Pop->Push | Link                   |
+| --------------- | ------------------------ | -------- | ---- | --------- | ---------------------- |
+| `PUSH`          | `HOSHI_OP_PUSH`          | `push`   | 1    | 0->1      | [more](#push)          |
+| `POP`           | `HOSHI_OP_POP`           | `pop`    | 0    | 1->0      | [more](#pop)           |
+| `CONSTANT`      | `HOSHI_OP_CONSTANT`      | n/a      | 1    | 0->1      | [more](#constant)      |
+| `CONSTANT_LONG` | `HOSHI_OP_CONSTANT_LONG` | n/a      | 3    | 0->1      | [more](#constant_long) |
+| `ADD`           | `HOSHI_OP_ADD`           | `add`    | 0    | 2->1      | [more](#add)           |
+| `SUB`           | `HOSHI_OP_SUB`           | `sub`    | 0    | 2->1      | [more](#sub)           |
+| `MUL`           | `HOSHI_OP_MUL`           | `mul`    | 0    | 2->1      | [more](#mul)           |
+| `DIV`           | `HOSHI_OP_DIV`           | `div`    | 0    | 2->1      | [more](#div)           |
+| `NEGATE`        | `HOSHI_OP_NEGATE`        | `negate` | 0    | 1->1      | [more](#negate)        |
+| `RETURN`        | `HOSHI_OP_RETURN`        | `return` | 0    | 1->0      | [more](#return)        |
+| `EXIT`          | `HOSHI_OP_RETURN`        | `exit`   | 0    | 1->0      | [more](#exit)          |
+
+## `PUSH`
+
+Push one value onto the stack.
+
+|           |                 |
+| --------- | --------------- |
+| C         | `HOSHI_OP_PUSH` |
+| HIR       | `push`          |
+| Args      | 0               |
+| Push->Pop | 0->1            |
+
+**HIR:**
+
+```hir
+push 42 // push a value
+```
 
 ## `POP`
 
@@ -20,7 +38,8 @@ Pop one value from the stack.
 |           |                |
 | --------- | -------------- |
 | C         | `HOSHI_OP_POP` |
-| HIR       | N/A            |
+| HIR       | `pop`          |
+| Args      | 0              |
 | Push->Pop | 1->0           |
 
 **HIR:**
@@ -38,7 +57,8 @@ Get a constant from the chunk's constant pool with the previous value as the ID.
 | --------- | ------------------- |
 | C         | `HOSHI_OP_CONSTANT` |
 | HIR       | N/A                 |
-| Push->Pop | 1->1                |
+| Args      | 1                   |
+| Push->Pop | 0->1                |
 
 **HIR:**
 
@@ -56,9 +76,10 @@ This is only emitted after 256 constants have been created in the current chunk.
 | --------- | ------------------------ |
 | C         | `HOSHI_OP_CONSTANT_LONG` |
 | HIR       | N/A                      |
-| Push->Pop | 3->1                     |
+| Args      | 3                        |
+| Push->Pop | 0->1                     |
 
-**hIR:**
+**HIR:**
 
 ```hir
 42 // `42` is inserted into the constant pool, then is pushed onto the stack.
@@ -71,7 +92,8 @@ Pop the top two values from the stack, add them together, then pushes the result
 |           |                |
 | --------- | -------------- |
 | C         | `HOSHI_OP_ADD` |
-| HIR       | N/A            |
+| HIR       | `add`          |
+| Args      | 0              |
 | Push->Pop | 2->1           |
 
 **HIR:**
@@ -87,7 +109,8 @@ Pop the top two values from the stack, subtract the second from the first, then 
 |           |                |
 | --------- | -------------- |
 | C         | `HOSHI_OP_DIV` |
-| HIR       | N/A            |
+| HIR       | `div`          |
+| Args      | 0              |
 | Push->Pop | 2->1           |
 
 **HIR:**
@@ -103,7 +126,8 @@ Pop the top two values from the stack, multiplies them, then pushes the result o
 |           |                |
 | --------- | -------------- |
 | C         | `HOSHI_OP_MUL` |
-| HIR       | N/A            |
+| HIR       | `mul`          |
+| Args      | 0              |
 | Push->Pop | 2->1           |
 
 **HIR:**
@@ -119,7 +143,8 @@ Pop the top two values from the stack, divides the second from the first, then p
 |           |                |
 | --------- | -------------- |
 | C         | `HOSHI_OP_DIV` |
-| HIR       | N/A            |
+| HIR       | `div`          |
+| Args      | 0              |
 | Push->Pop | 2->1           |
 
 **HIR:**
@@ -138,7 +163,8 @@ Mutate the top value of the stack to be the negative of itself.
 |           |                   |
 | --------- | ----------------- |
 | C         | `HOSHI_OP_NEGATE` |
-| HIR       | N/A               |
+| HIR       | `negate`          |
+| Args      | 0                 |
 | Push->Pop | 0->0              |
 
 **HIR:**
@@ -157,7 +183,8 @@ Pops and prints the value of the top element on the stack. This will be changed 
 |           |                   |
 | --------- | ----------------- |
 | C         | `HOSHI_OP_RETURN` |
-| HIR       | N/A               |
+| HIR       | `return`          |
+| Args      | 0                 |
 | Push->Pop | 1->0              |
 
 **HIR:**
@@ -173,7 +200,8 @@ Pops the top value of the stack and `exit`s using that value as the return code.
 |           |                 |
 | --------- | --------------- |
 | C         | `HOSHI_OP_EXIT` |
-| HIR       | N/A             |
+| HIR       | `exit`          |
+| Args      | 0               |
 | Push->Pop | 1->0            |
 
 **HIR:**

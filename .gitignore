@@ -10,6 +10,11 @@ main
 *.dylib
 *.dll
 
+# Generated when transpiling/compiling HIR files
+/out.c
+/tmp.c
+/out.hoshi
+
 # Editors and OS things
 .DS_Store
 .vscode/

@@ -4,6 +4,8 @@
 #include "value.h"
 #include "memory.h"
 #include <stdint.h>
+#include <stdbool.h>
+#include <stdio.h>
 
 /* Macros */
 
@@ -11,17 +13,18 @@
  * The growth factor can be modified by changing the `2` here. */
 #define HOSHI_GROW_CAPACITY(capacity) ((capacity) < 8 ? 8 : (capacity) * 2)
 
- /* Grows the array to `sizeof(type) * newCount` from `sizeof(type) * oldCount`. */
+/* Grows the array to `sizeof(type) * newCount` from `sizeof(type) * oldCount`. */
 #define HOSHI_GROW_ARRAY(type, pointer, oldCount, newCount) \
 	(type *)hoshi_realloc(pointer, sizeof(type) * (oldCount), sizeof(type) * (newCount))
 
- /* Frees the given array. */
+/* Frees the given array. */
 #define HOSHI_FREE_ARRAY(type, pointer, oldCount) \
 	(void)(hoshi_realloc(pointer, sizeof(type) * (oldCount), 0))
 
 /* Enumerations */
 
 typedef enum {
+	HOSHI_OP_PUSH,
 	HOSHI_OP_POP,
 	HOSHI_OP_CONSTANT,
 	HOSHI_OP_CONSTANT_LONG,
@@ -68,5 +71,9 @@ void hoshi_writeChunk(hoshi_Chunk *chunk, uint8_t byte, int line);
 void hoshi_writeConstant(hoshi_Chunk *chunk, hoshi_Value value, int line);
 int hoshi_addConstant(hoshi_Chunk *chunk, hoshi_Value value);
 int hoshi_getLine(hoshi_Chunk *chunk, int instruction);
+bool hoshi_readChunkFromFile(hoshi_Chunk *chunk, FILE *file);
+void hoshi_writeChunkToFile(hoshi_Chunk *chunk, FILE *file);
+void hoshi_writeChunkToC(hoshi_Chunk *chunk, FILE *file);
+void hoshi_writeChunkToCNonHuman(hoshi_Chunk *chunk, FILE *file);
 
 #endif

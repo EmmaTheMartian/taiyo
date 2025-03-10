@@ -61,6 +61,10 @@ hoshi_InterpretResult hoshi_runNext(hoshi_VM *vm)
 
 		/* Here's a switch statement in its natural habitat. They're found in all interpreters somewhere. */
 		switch (instruction = READ_BYTE()) {
+			case HOSHI_OP_PUSH: {
+				hoshi_push(vm, READ_BYTE());
+				break;
+			}
 			case HOSHI_OP_POP: {
 				if (vm->stackTop == vm->stack) {
 					fputs("error: attempted to pop but stack was empty.\n", stderr);

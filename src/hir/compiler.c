@@ -71,6 +71,7 @@ static void hir_consume(hir_Parser *parser, hir_Lexer *lexer, hir_TokenType type
 
 static void hir_emitByte(hir_Parser *parser, uint8_t byte)
 {
+	printf("emitByte line; %d\n", parser->previous.line);
 	hoshi_writeChunk(parser->currentChunk, byte, parser->previous.line);
 }
 
@@ -87,13 +88,8 @@ static void hir_emitBytes3(hir_Parser *parser, uint8_t byte1, uint8_t byte2, uin
 	hir_emitByte(parser, byte3);
 }
 
-static void hir_emitReturn(hir_Parser *parser)
-{
-}
-
 static void hir_endCompiler(hir_Parser *parser)
 {
-	hir_emitReturn(parser);
 #if HIR_ENABLE_PRINT_DISASSEMBLY
 	if (!parser->hadError) {
 		hoshi_disassembleChunk(parser->currentChunk, "Code");
@@ -141,6 +137,14 @@ bool hir_compileString(hoshi_Chunk *chunk, const char *string)
 	parser.hadError = false;
 	parser.panicMode = false;
 	parser.currentChunk = chunk;
+
+	parser.previous.line = 1;
+	parser.current.line = 1;
+
+	/* FIXME: Temporary. Line numbers were breaking without this for whatever reason... */
+	// hoshi_writeChunk(parser.currentChunk, HOSHI_OP_PUSH, 0);
+	// hoshi_writeChunk(parser.currentChunk, -1, 0);
+	// hoshi_writeChunk(parser.currentChunk, HOSHI_OP_POP, 0);
 
 	hir_advance(&parser, &lexer);
 	for (;;) {

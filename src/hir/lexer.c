@@ -136,7 +136,10 @@ static hir_TokenType hir_identifierType(hir_Lexer *lexer)
 {
 	/* Check for keywords */
 	switch (lexer->start[0]) {
-		case 'p': return hir_checkKeyword(lexer, 1, 2, "op", HIR_TOKEN_POP);
+		case 'p': switch (lexer->start[1]) {
+			case 'u': return hir_checkKeyword(lexer, 1, 2, "sh", HIR_TOKEN_PUSH);
+			case 'o': return hir_checkKeyword(lexer, 1, 1, "p", HIR_TOKEN_POP);
+		}
 		case 'a': return hir_checkKeyword(lexer, 1, 2, "dd", HIR_TOKEN_ADD);
 		case 's': return hir_checkKeyword(lexer, 1, 2, "ub", HIR_TOKEN_SUB);
 		case 'm': return hir_checkKeyword(lexer, 1, 2, "ul", HIR_TOKEN_MUL);
@@ -159,6 +162,7 @@ static hir_Token hir_identifier(hir_Lexer *lexer)
 hir_Token hir_scanToken(hir_Lexer *lexer)
 {
 	hir_skipWhitespace(lexer);
+	printf("scanToken line: %d\n", lexer->line);
 	lexer->start = lexer->current;
 
 	if (hir_isAtEnd(lexer)) {
@@ -195,6 +199,7 @@ void hir_printToken(hir_Token *token)
 		case HIR_TOKEN_NUMBER: fputs("NUMBER", stdout); break;
 		case HIR_TOKEN_STRING: fputs("STRING", stdout); break;
 		// Operations
+                case HIR_TOKEN_PUSH: fputs("PUSH", stdout); break;
                 case HIR_TOKEN_POP: fputs("POP", stdout); break;
                 case HIR_TOKEN_ADD: fputs("ADD", stdout); break;
                 case HIR_TOKEN_SUB: fputs("SUB", stdout); break;

@@ -12,7 +12,7 @@ void hoshi_disassembleChunk(hoshi_Chunk *chunk, const char *name)
 	printf("== %s ==\n", name);
 
 #if HOSHI_DISASSEMBLER_ENABLE_RAW_CODE_DUMP
-	puts("-- Code Dump --");
+	puts("-- Raw Code Dump --");
 	for (int offset = 0; offset < chunk->count; offset++) {
 		printf("%d ", chunk->code[offset]);
 	}
@@ -28,7 +28,7 @@ void hoshi_disassembleChunk(hoshi_Chunk *chunk, const char *name)
 	}
 #endif
 
-	puts("-- Instruction Dump --");
+	printf("-- Instruction Dump (%d) --\n", chunk->count);
 	for (int offset = 0; offset < chunk->count; ) {
 		offset = hoshi_disassembleInstruction(chunk, offset);
 	}
@@ -72,6 +72,14 @@ static int hoshi_longConstantInstruction(const char *name, hoshi_Chunk *chunk, i
 	return offset + 4;
 }
 
+static int hoshi_singleArgInstruction(const char *name, hoshi_Chunk *chunk, int offset)
+{
+	printf("%-16s      '", name);
+	hoshi_printValue(chunk->code[offset + 1]);
+	puts("'");
+	return offset + 2;
+}
+
 int hoshi_disassembleInstruction(hoshi_Chunk *chunk, int offset)
 {
 	printf("%04d ", offset);
@@ -85,6 +93,8 @@ int hoshi_disassembleInstruction(hoshi_Chunk *chunk, int offset)
 
 	uint8_t instruction = chunk->code[offset];
 	switch (instruction) {
+		case HOSHI_OP_PUSH:
+			return hoshi_singleArgInstruction("PUSH", chunk, offset);
 		case HOSHI_OP_POP:
 			return hoshi_simpleInstruction("POP", offset);
 		case HOSHI_OP_CONSTANT:
