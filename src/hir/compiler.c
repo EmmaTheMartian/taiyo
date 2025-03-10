@@ -71,7 +71,6 @@ static void hir_consume(hir_Parser *parser, hir_Lexer *lexer, hir_TokenType type
 
 static void hir_emitByte(hir_Parser *parser, uint8_t byte)
 {
-	printf("emitByte line; %d\n", parser->previous.line);
 	hoshi_writeChunk(parser->currentChunk, byte, parser->previous.line);
 }
 

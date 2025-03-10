@@ -151,9 +151,6 @@ static void runFile(const char *path)
 		quit(1);
 	}
 
-	/* Print disassembly */
-	hoshi_disassembleChunk(&chunk, path);
-
 	/* Run chunk */
 	hoshi_VM vm;
 	hoshi_initVM(&vm);

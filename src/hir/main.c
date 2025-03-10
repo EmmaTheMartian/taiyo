@@ -46,6 +46,7 @@ static char *inputFile = NULL;
 static char *outputFile = NULL;
 static char *cc = NULL;
 static char *ccFlags = NULL;
+static bool printDisasm = false;
 
 static void runFile(const char *path);
 static void transpileFileToC(const char *inputFilePath, const char *outputFilePath, bool human);
@@ -82,6 +83,7 @@ int main(int argc, char *argv[])
 		{ "run",           no_argument,       NULL, 'r' },
 		{ "compile",       no_argument,       NULL, 'c' },
 		{ "transpile",     no_argument,       NULL, 't' },
+		{ "disassemble",   no_argument,       NULL, 'd' },
 		{ "backend",       required_argument, NULL, 'b' },
 		{ "cc",            required_argument, NULL, 'C' },
 		{ "flags",         required_argument, NULL, 'f' },
@@ -97,7 +99,7 @@ int main(int argc, char *argv[])
 	}
 
 	int opt;
-	while ((opt = getopt_long(argc, argv, ":rctb:C:f:o:h", longopts, NULL)) != -1) {
+	while ((opt = getopt_long(argc, argv, ":rctdb:C:f:o:h", longopts, NULL)) != -1) {
 		switch (opt) {
 			/* Actions */
 			case 'r':
@@ -122,6 +124,9 @@ int main(int argc, char *argv[])
 				mode = TRANSPILE;
 				break;
 			/* Config */
+			case 'd':
+				printDisasm = true;
+				break;
 			case 'b':
 				if (strcmp(optarg, "hoshi")) {
 					backend = BACKEND_HOSHI;
@@ -264,6 +269,11 @@ static void transpileFileToC(const char *inputFilePath, const char *outputFilePa
 	hoshi_initChunk(&chunk);
 	hir_compileString(&chunk, source);
 
+	/* Disassembly */
+	if (printDisasm) {
+		hoshi_disassembleChunk(&chunk, "hoshi");
+	}
+
 	/* Write to C file */
 	printf("  | Writing to %s\n", outputFilePath);
 	FILE *outFile = fopen(outputFilePath, "wb");
@@ -304,8 +314,10 @@ static void compileFileToHoshi(const char *inputFilePath, const char *outputFile
 	hoshi_initChunk(&chunk);
 	hir_compileString(&chunk, source);
 
-	hoshi_disassembleChunk(&chunk, "hoshi");
-	printf("lines: %d\n", chunk.lineCount);
+	/* Disassembly */
+	if (printDisasm) {
+		hoshi_disassembleChunk(&chunk, "hoshi");
+	}
 
 	/* Write to Hoshi file */
 	printf("  | Writing to %s\n", outputFilePath);

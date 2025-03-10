@@ -189,7 +189,7 @@ bool hoshi_readChunkFromFile(hoshi_Chunk *chunk, FILE *file)
 		/* grow constant pool if needed */
 		if (chunk->constants.capacity < constantCount + 1) {
 			int oldCapacity = chunk->constants.capacity;
-			chunk->constants.capacity = HOSHI_GROW_CAPACITY(oldCapacity);
+			chunk->constants.capacity = constantCount;
 			chunk->constants.values = HOSHI_GROW_ARRAY(hoshi_Value, chunk->constants.values, oldCapacity, chunk->constants.capacity);
 		}
 		chunk->constants.count = constantCount;
@@ -205,7 +205,7 @@ bool hoshi_readChunkFromFile(hoshi_Chunk *chunk, FILE *file)
 		/* grow instruction array if needed */
 		if (chunk->capacity < instructionCount + 1) {
 			int oldCapacity = chunk->capacity;
-			chunk->capacity = HOSHI_GROW_CAPACITY(oldCapacity);
+			chunk->capacity = instructionCount;
 			chunk->code = HOSHI_GROW_ARRAY(uint8_t, chunk->code, oldCapacity, chunk->capacity);
 		}
 		chunk->count = instructionCount;
@@ -220,11 +220,10 @@ bool hoshi_readChunkFromFile(hoshi_Chunk *chunk, FILE *file)
 		/* grow constant pool if needed */
 		if (chunk->lineCapacity < lineCount + 1) {
 			int oldCapacity = chunk->lineCapacity;
-			chunk->lineCapacity = HOSHI_GROW_CAPACITY(oldCapacity);
+			chunk->lineCapacity = lineCount;
 			chunk->lines = HOSHI_GROW_ARRAY(hoshi_LineStart, chunk->lines, oldCapacity, chunk->lineCapacity);
 		}
 		chunk->lineCount = lineCount;
-		printf("lines: %d\n", lineCount);
 		for (size_t i = 0; i < lineCount; i++) {
 			chunk->lines[i].offset = binio_freadu16(file);
 			chunk->lines[i].line = binio_freadu16(file);

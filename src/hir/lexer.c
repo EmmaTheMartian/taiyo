@@ -164,7 +164,6 @@ static hir_Token hir_identifier(hir_Lexer *lexer)
 hir_Token hir_scanToken(hir_Lexer *lexer)
 {
 	hir_skipWhitespace(lexer);
-	printf("scanToken line: %d\n", lexer->line);
 	lexer->start = lexer->current;
 
 	if (hir_isAtEnd(lexer)) {
