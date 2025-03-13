@@ -6,8 +6,14 @@ libhoshi_flags="-o libhoshi.so -fPIC -shared"
 libhoshi_debug_flags="
 	-DHOSHI_ENABLE_TRACE_EXECUTION_DEBUGGING=1
 	-DHOSHI_DISASSEMBLER_ENABLE_RAW_CODE_DUMP=1
-	-DHOSHI_DISASSEMBLER_ENABLE_CONSTANT_DUMP=1"
+	-DHOSHI_DISASSEMBLER_ENABLE_CONSTANT_DUMP=1
+	-DHOSHI_ENABLE_CHUNK_WRITE_DEBUG_INFO=1
+	-DHOSHI_ENABLE_CHUNK_READ_DEBUG_INFO=1
+	-DHOSHI_ENABLE_CHUNK_DEBUG_FLAGS=1"
 libhoshi_sources="
+	src/binio/binio.c
+	src/hoshi/chunk_loader.c
+	src/hoshi/chunk_writer.c
 	src/hoshi/chunk.c
 	src/hoshi/debug.c
 	src/hoshi/memory.c

@@ -8,6 +8,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+size_t taiyoCommon_fileSize(FILE *file)
+{
+	size_t size = 0;
+	size_t old = ftell(file);
+	fseek(file, 0L, SEEK_END);
+	size = ftell(file);
+	fseek(file, size, SEEK_SET);
+	return size;
+}
+
 /* Reads a file and mutates the provided fileSize to equal the size of the file in bytes. */
 char *taiyoCommon_readFileWithSize(const char *filePath, size_t *fileSize)
 {

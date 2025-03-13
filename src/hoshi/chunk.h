@@ -7,8 +7,6 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-/* Enumerations */
-
 typedef enum {
 	/* Stack ops */
 	HOSHI_OP_PUSH,
@@ -43,8 +41,6 @@ typedef enum {
 	HOSHI_OP_EXIT,
 } hoshi_OpCode;
 
-/* Structures */
-
 typedef struct {
 	int count;
 	int capacity;
@@ -66,7 +62,7 @@ typedef struct {
 	hoshi_LineStart *lines;
 } hoshi_Chunk;
 
-/* Function signatures */
+static const char hoshi_magicNumber[7] = { 0x7f, 'H', 'O', 'S', 'H', 'I', 0x7f };
 
 void hoshi_initValueArray(hoshi_ValueArray *va);
 void hoshi_freeValueArray(hoshi_ValueArray *va);
@@ -77,9 +73,5 @@ void hoshi_writeChunk(hoshi_Chunk *chunk, uint8_t byte, int line);
 void hoshi_writeConstant(hoshi_Chunk *chunk, hoshi_Value value, int line);
 int hoshi_addConstant(hoshi_Chunk *chunk, hoshi_Value value);
 int hoshi_getLine(hoshi_Chunk *chunk, int instruction);
-bool hoshi_readChunkFromFile(hoshi_Chunk *chunk, FILE *file);
-void hoshi_writeChunkToFile(hoshi_Chunk *chunk, FILE *file);
-void hoshi_writeChunkToC(hoshi_Chunk *chunk, FILE *file);
-void hoshi_writeChunkToCNonHuman(hoshi_Chunk *chunk, FILE *file);
 
 #endif

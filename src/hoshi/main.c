@@ -1,5 +1,6 @@
 #include "../common/fileio.c"
 #include "chunk.h"
+#include "chunk_loader.h"
 #include "debug.h"
 #include "vm.h"
 #include <getopt.h>
@@ -146,7 +147,7 @@ static void runFile(const char *path)
 	bool readSuccess = hoshi_readChunkFromFile(&chunk, file);
 	fclose(file);
 	if (!readSuccess) {
-		fputs("error: file had invalid header (are you sure it was a Hoshi file?)", stderr);
+		fputs("error: file had invalid header (are you sure it was a Hoshi file?)\n", stderr);
 		quit(1);
 	}
 
@@ -182,7 +183,7 @@ static void disassembleFile(const char *path)
 	bool readSuccess = hoshi_readChunkFromFile(&chunk, file);
 	fclose(file);
 	if (!readSuccess) {
-		fputs("error: file had invalid header (are you sure it was a Hoshi file?)", stderr);
+		fputs("error: file had invalid header (are you sure it was a Hoshi file?)\n", stderr);
 		quit(1);
 	}
 

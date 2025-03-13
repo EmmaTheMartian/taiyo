@@ -24,7 +24,7 @@ struct hoshi_Object {
 
 struct hoshi_ObjectString {
 	hoshi_Object object;
-	int length;
+	int length; /* TODO: LEB128 */
 	char *chars;
 };
 

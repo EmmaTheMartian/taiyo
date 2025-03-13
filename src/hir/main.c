@@ -4,6 +4,7 @@
 #include "../common/thirdparty/asprintf.h"
 #include "compiler.h"
 #include "../hoshi/debug.h"
+#include "../hoshi/chunk_writer.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <getopt.h>

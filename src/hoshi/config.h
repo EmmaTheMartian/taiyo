@@ -30,4 +30,22 @@
 	#define HOSHI_DISASSEMBLER_ENABLE_CONSTANT_DUMP 1
 #endif
 
+/* Chunk read/write debugging */
+
+#ifndef HOSHI_ENABLE_CHUNK_WRITE_DEBUG_INFO
+	/* Set to `1` to enable debug information when writing chunks. */
+	#define HOSHI_ENABLE_CHUNK_WRITE_DEBUG_INFO 0
+#endif
+
+#ifndef HOSHI_ENABLE_CHUNK_READ_DEBUG_INFO
+	/* Set to `1` to enable debug information when reading chunks. */
+	#define HOSHI_ENABLE_CHUNK_READ_DEBUG_INFO 0
+#endif
+
+#ifndef HOSHI_ENABLE_CHUNK_DEBUG_FLAGS
+	/* Set to `1` to enable flags in written Hoshi files (i.e, `.code` section to mark instructions or `.consts` for constants, etc etc)
+	 * Note that files compiled with debug flags cannot be parsed unless this flag is also set on reader. */
+	#define HOSHI_ENABLE_CHUNK_DEBUG_FLAGS 0
+#endif
+
 #endif

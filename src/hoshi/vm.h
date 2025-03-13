@@ -4,15 +4,11 @@
 #include "chunk.h"
 #include "config.h"
 
-/* Enumerations */
-
 typedef enum {
 	HOSHI_INTERPRET_OK,
 	HOSHI_INTERPRET_COMPILE_ERROR,
 	HOSHI_INTERPRET_RUNTIME_ERROR,
 } hoshi_InterpretResult;
-
-/* Structures */
 
 typedef struct {
 	hoshi_Chunk *chunk;
@@ -21,8 +17,6 @@ typedef struct {
 	hoshi_Value *stackTop;
 	int exitCode;
 } hoshi_VM;
-
-/* Function signatures */
 
 void hoshi_initVM(hoshi_VM *vm);
 void hoshi_freeVM(hoshi_VM *vm);

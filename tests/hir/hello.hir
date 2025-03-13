@@ -2,5 +2,6 @@
 ", "     concat
 "World"  concat
 "!"      concat
+return # temporary system to print the message to stdout
 
 42 exit
