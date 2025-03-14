@@ -4,6 +4,7 @@
 #include "../binio/binio.h"
 #include "chunk_loader.h"
 #include "chunk.h"
+#include "memory.h"
 #include "object.h"
 #include "config.h"
 #include "value.h"
@@ -17,7 +18,7 @@
 	#define READ_CHUNK_FLAG(len, file) ;
 #endif
 
-hoshi_Object *hoshi_readObjectFromFile(FILE *file)
+hoshi_Object *hoshi_readObjectFromFile(hoshi_ObjectTracker *tracker, FILE *file)
 {
 	/* Read object type */
 	READ_CHUNK_FLAG("/", file);
@@ -28,15 +29,15 @@ hoshi_Object *hoshi_readObjectFromFile(FILE *file)
 	switch (type) {
 		case HOSHI_OBJTYPE_STRING: {
 			size_t length = binio_readU32(file);
-			char *chars = malloc(sizeof(char) * (length + 1));
+			char *chars = HOSHI_ALLOCATE(char, length + 1);
 			fread(chars, sizeof(char), length, file);
 			chars[length] = '\0';
-			return (hoshi_Object *)hoshi_takeString(chars, length);
+			return (hoshi_Object *)hoshi_takeString(tracker, chars, length);
 		}
 	}
 }
 
-hoshi_Value hoshi_readValueFromFile(FILE *file)
+hoshi_Value hoshi_readValueFromFile(hoshi_ObjectTracker *tracker, FILE *file)
 {
 	/* Read the type identifier */
 	READ_CHUNK_FLAG("#", file);
@@ -56,13 +57,13 @@ hoshi_Value hoshi_readValueFromFile(FILE *file)
 		case HOSHI_TYPE_NIL:
 			return HOSHI_NIL();
 		case HOSHI_TYPE_OBJECT: {
-			hoshi_Object *object = hoshi_readObjectFromFile(file);
+			hoshi_Object *object = hoshi_readObjectFromFile(tracker, file);
 			return HOSHI_OBJECT(object);
 		}
 	}
 }
 
-bool hoshi_readChunkFromFile(hoshi_Chunk *chunk, FILE *file)
+bool hoshi_readChunkFromFile(hoshi_ObjectTracker *tracker, hoshi_Chunk *chunk, FILE *file)
 {
 	hoshi_initChunk(chunk);
 
@@ -135,7 +136,7 @@ bool hoshi_readChunkFromFile(hoshi_Chunk *chunk, FILE *file)
 		#endif
 		DBG("Reading constants\n");
 		for (size_t i = 0; i < constantCount; i++) {
-			hoshi_Value value = hoshi_readValueFromFile(file);
+			hoshi_Value value = hoshi_readValueFromFile(tracker, file);
 			chunk->constants.values[i] = value;
 #if HOSHI_ENABLE_CHUNK_READ_DEBUG_INFO
 			printf("  | Read constant %zu: ", i);

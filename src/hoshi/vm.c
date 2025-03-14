@@ -18,16 +18,30 @@ static void hoshi_resetStack(hoshi_VM *vm)
 	vm->stackTop = vm->stack;
 }
 
+void hoshi_freeAllObjects(hoshi_VM *vm)
+{
+	hoshi_Object *object = vm->tracker.objects;
+	while (object != NULL) {
+		hoshi_Object *next = object->next;
+		hoshi_freeObject(object);
+		object = next;
+	}
+}
+
 void hoshi_initVM(hoshi_VM *vm)
 {
 	hoshi_resetStack(vm);
 	vm->exitCode = 0;
+	vm->tracker.objects = NULL;
+	hoshi_freeAllObjects(vm);
 }
 
 extern size_t hoshi_leakedBytes;
 
 void hoshi_freeVM(hoshi_VM *vm)
 {
+	hoshi_freeAllObjects(vm);
+
 	#if HOSHI_COUNT_LEAKED_BYTES
 	printf("Leaked bytes: %zu\n", hoshi_leakedBytes);
 	#endif
@@ -75,7 +89,7 @@ static void hoshi_concatenate(hoshi_VM *vm)
 	memcpy(chars + a->length, b->chars, b->length);
 	chars[length] = '\0';
 
-	hoshi_ObjectString *result = hoshi_takeString(chars, length);
+	hoshi_ObjectString *result = hoshi_takeString(&vm->tracker, chars, length);
 	hoshi_push(vm, HOSHI_OBJECT(result));
 }
 

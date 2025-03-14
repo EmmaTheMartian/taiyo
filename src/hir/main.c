@@ -77,6 +77,7 @@ static void setflag(char **flag)
 	}
 	*flag = malloc(strlen(optarg) * sizeof(char));
 	strcpy(*flag, optarg);
+	free(flag);
 }
 
 int main(int argc, char *argv[])
@@ -231,14 +232,16 @@ static void runFile(const char *path)
 	puts("== End Token Dump ==");
 #endif
 
+	/* Initialize VM */
+	hoshi_VM vm;
+	hoshi_initVM(&vm);
+
 	/* Compile code */
 	hoshi_Chunk chunk;
 	hoshi_initChunk(&chunk);
-	hir_compileString(&chunk, source);
+	hir_compileString(&vm, &chunk, source);
 
 	/* Execute code */
-	hoshi_VM vm;
-	hoshi_initVM(&vm);
 	hoshi_InterpretResult result = hoshi_runChunk(&vm, &chunk);
 
 	/* Clean up */
@@ -267,11 +270,15 @@ static void transpileFileToC(const char *inputFilePath, const char *outputFilePa
 	puts("== End Token Dump ==");
 #endif
 
+	/* Initialize VM */
+	hoshi_VM vm;
+	hoshi_initVM(&vm);
+
 	/* Compile code */
 	puts("  | Compiling");
 	hoshi_Chunk chunk;
 	hoshi_initChunk(&chunk);
-	hir_compileString(&chunk, source);
+	hir_compileString(&vm, &chunk, source);
 
 	/* Disassembly */
 	if (printDisasm) {
@@ -296,6 +303,7 @@ static void transpileFileToC(const char *inputFilePath, const char *outputFilePa
 	/* Clean up */
 	fclose(outFile);
 	hoshi_freeChunk(&chunk);
+	hoshi_freeVM(&vm);
 	free(source);
 }
 
@@ -312,11 +320,15 @@ static void compileFileToHoshi(const char *inputFilePath, const char *outputFile
 	puts("== End Token Dump ==");
 #endif
 
+	/* Initialize VM */
+	hoshi_VM vm;
+	hoshi_initVM(&vm);
+
 	/* Compile code */
 	puts("  | Compiling");
 	hoshi_Chunk chunk;
 	hoshi_initChunk(&chunk);
-	hir_compileString(&chunk, source);
+	hir_compileString(&vm, &chunk, source);
 
 	/* Disassembly */
 	if (printDisasm) {
@@ -338,6 +350,7 @@ static void compileFileToHoshi(const char *inputFilePath, const char *outputFile
 	puts("  | Cleaning up");
 	fclose(outFile);
 	hoshi_freeChunk(&chunk);
+	hoshi_freeVM(&vm);
 	free(source);
 }
 

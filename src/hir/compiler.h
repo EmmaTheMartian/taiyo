@@ -15,7 +15,7 @@ typedef struct {
 } hir_Parser;
 
 /* Compile the given string. */
-bool hir_compileString(hoshi_Chunk *chunk, const char *string);
+bool hir_compileString(hoshi_VM *vm, hoshi_Chunk *chunk, const char *string);
 
 /* Compile and execute the given string. */
 hoshi_InterpretResult hir_runString(hoshi_VM *vm, const char *string);

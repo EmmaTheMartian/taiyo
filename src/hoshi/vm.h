@@ -3,6 +3,8 @@
 
 #include "chunk.h"
 #include "config.h"
+#include "memory.h"
+#include "value.h"
 
 typedef enum {
 	HOSHI_INTERPRET_OK,
@@ -16,9 +18,11 @@ typedef struct {
 	hoshi_Value stack[HOSHI_STACK_SIZE];
 	hoshi_Value *stackTop;
 	int exitCode;
+	hoshi_ObjectTracker tracker;
 } hoshi_VM;
 
 void hoshi_initVM(hoshi_VM *vm);
+void hoshi_freeAllObjects(hoshi_VM *vm);
 void hoshi_freeVM(hoshi_VM *vm);
 void hoshi_panic(hoshi_VM *vm, const char *format, ...);
 void hoshi_push(hoshi_VM *vm, hoshi_Value value);

@@ -108,22 +108,23 @@ static void hir_number(hir_Parser *parser)
 	hir_emitConstant(parser, HOSHI_NUMBER(strtod(parser->previous.start, NULL)));
 }
 
-static void hir_string(hir_Parser *parser)
+static void hir_string(hoshi_ObjectTracker *tracker, hir_Parser *parser)
 {
 	hir_emitConstant(parser, HOSHI_OBJECT(hoshi_copyString(
+		tracker,
 		parser->previous.start + 1,
 		parser->previous.length - 2
 	)));
 }
 
-static void hir_expression(hir_Parser *parser, hir_Lexer *lexer)
+static void hir_expression(hoshi_ObjectTracker *tracker, hir_Parser *parser, hir_Lexer *lexer)
 {
 	hir_advance(parser, lexer);
 	switch (parser->previous.type) {
 		/* Values */
 		// case HIR_TOKEN_DOLLAR:
 		case HIR_TOKEN_NUMBER: hir_number(parser); break;
-		case HIR_TOKEN_STRING: hir_string(parser); break;
+		case HIR_TOKEN_STRING: hir_string(tracker, parser); break;
 		case HIR_TOKEN_TRUE: hir_emitByte(parser, HOSHI_OP_TRUE); break;
 		case HIR_TOKEN_FALSE: hir_emitByte(parser, HOSHI_OP_FALSE); break;
 		case HIR_TOKEN_NIL: hir_emitByte(parser, HOSHI_OP_NIL); break;
@@ -152,7 +153,7 @@ static void hir_expression(hir_Parser *parser, hir_Lexer *lexer)
         }
 }
 
-bool hir_compileString(hoshi_Chunk *chunk, const char *string)
+bool hir_compileString(hoshi_VM *vm, hoshi_Chunk *chunk, const char *string)
 {
 	hir_Lexer lexer;
 	hir_Parser parser;
@@ -173,7 +174,7 @@ bool hir_compileString(hoshi_Chunk *chunk, const char *string)
 
 	hir_advance(&parser, &lexer);
 	for (;;) {
-		hir_expression(&parser, &lexer);
+		hir_expression(&vm->tracker, &parser, &lexer);
 		if (parser.current.type == HIR_TOKEN_EOF) {
 			break;
 		}
@@ -188,7 +189,7 @@ bool hir_compileString(hoshi_Chunk *chunk, const char *string)
 hoshi_InterpretResult hir_runString(hoshi_VM *vm, const char *string)
 {
 	hoshi_Chunk chunk;
-	if (!hir_compileString(&chunk, string)) {
+	if (!hir_compileString(vm, &chunk, string)) {
 		hoshi_freeChunk(&chunk);
 		return HOSHI_INTERPRET_COMPILE_ERROR;
 	}

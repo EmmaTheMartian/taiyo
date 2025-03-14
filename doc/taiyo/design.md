@@ -1,4 +1,8 @@
-# Design
+# Taiyo Design Notes
+
+This document is primarily for me to design parts of Taiyo either before
+implementation or so that I can rant about something that I will or will not do
+in Taiyo.
 
 ## Syntax
 
@@ -10,7 +14,7 @@
 (print "Hello, World!")
 
 # Brace indicate compile-time code, these expressions are evaluated in a Hoshi
-# runtime at compile time and can be used to generate run-time code.
+# run-time at compile time and can be used to generate run-time code.
 {print "Hello, World!"}
 
 # Expressions can be nested infinitely, and compile-time expressions can be
