@@ -12,7 +12,7 @@ enum BuildMode {
 
 struct Config {
 pub mut:
-	cc   string = 'gcc'
+	cc   string    = 'gcc'
 	mode BuildMode = .default
 	// opts []string = ['-Wall']
 	opts []string = []
@@ -35,7 +35,7 @@ fn (self Module) build(config Config) {
 		.debug {
 			opts << self.debug_opts
 		}
-		.default { }
+		.default {}
 		.release {
 			opts << self.prod_opts
 		}
@@ -45,16 +45,32 @@ fn (self Module) build(config Config) {
 	system(cmd)
 }
 
+@[params]
+struct FilesParams {
+pub:
+	path       string
+	excluded   []string
+	additional []string
+	filter     fn (string) bool = |path| path.ends_with('.c')
+}
+
+@[inline]
+fn files(params FilesParams) []string {
+	paths := ls(params.path) or { panic(err) }
+		.filter(it !in params.excluded && params.filter(it))
+		.map('${params.path}/${it}')
+	return arrays.append(paths, params.additional)
+}
+
 // Config //
 config := Config{}
 
 libhoshi := Module{
 	name:       'libhoshi.so'
-	sources:    arrays.concat(
-		ls('src/hoshi')!
-			.filter(it.ends_with('.c') && it != 'main.c')
-			.map('src/hoshi/${it}'),
-		'src/binio/binio.c'
+	sources:    files(
+		path:       'src/hoshi/'
+		excluded:   ['main.c']
+		additional: ['src/binio/binio.c']
 	)
 	build_opts: ['-fPIC', '-shared']
 	debug_opts: [
@@ -67,7 +83,7 @@ libhoshi := Module{
 	]
 }
 hoshi := Module{
-	...libhoshi,
+	...libhoshi
 	name:       'hoshi'
 	depends:    ['libhoshi.so']
 	sources:    ['src/hoshi/main.c', 'target/libhoshi.so']
@@ -76,14 +92,9 @@ hoshi := Module{
 hir := Module{
 	name:       'hir'
 	depends:    ['libhoshi.so']
-	sources:    arrays.append(
-		ls('src/hir')!
-			.filter(it.ends_with('.c'))
-			.map('src/hir/${it}'),
-		[
-			'target/libhoshi.so',
-			'src/common/thirdparty/asprintf.c'
-		]
+	sources:    files(
+		path:       'src/hir/'
+		additional: ['target/libhoshi.so', 'src/common/thirdparty/asprintf.c']
 	)
 	debug_opts: [
 		'-DHIR_ENABLE_PRINT_CODE=1',
@@ -109,7 +120,7 @@ context.artifact(
 
 for m in modules {
 	context.task(
-		name:    m.name,
+		name:    m.name
 		depends: arrays.append(['target'], m.depends)
 		run:     fn [m, config] (self build.Task) ! {
 			m.build(config)
