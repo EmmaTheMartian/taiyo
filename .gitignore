@@ -1,14 +1,5 @@
-# Executables and libraries
-main
-/taiyo
-/hoshi
-/hir
-*.out
-*.exe
-*.exe~
-*.so
-*.dylib
-*.dll
+# Built files
+/target/
 
 # Generated when transpiling/compiling HIR files
 /out.c
@@ -22,6 +13,5 @@ main
 # ENV
 .env
 
-# Zig
-/.zig-cache
-/zig-out
+# .gitpod.yml
+/v/

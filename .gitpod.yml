@@ -1,3 +1,9 @@
 tasks:
   - name: "Init"
-    init: brew install zig
+    init: |
+      git clone https://github.com/emmathemartian/v # using my fork for now since it has the `build` module. after it gets merged I will change this to vlang/v
+      cd v
+      make
+    command: |
+      # this needs to be executed every time
+      sudo ./v/v symlink
