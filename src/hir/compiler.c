@@ -110,9 +110,10 @@ static void hir_number(hir_Parser *parser)
 
 static void hir_string(hoshi_ObjectTracker *tracker, hir_Parser *parser)
 {
-	hir_emitConstant(parser, HOSHI_OBJECT(hoshi_copyString(
+	hir_emitConstant(parser, HOSHI_OBJECT(hoshi_makeString(
 		tracker,
-		parser->previous.start + 1,
+		false,
+		(char *)parser->previous.start + 1,
 		parser->previous.length - 2
 	)));
 }

@@ -35,7 +35,7 @@ hoshi_Object *hoshi_readObjectFromFile(hoshi_ObjectTracker *tracker, FILE *file)
 			char *chars = HOSHI_ALLOCATE(char, length + 1);
 			fread(chars, sizeof(char), length, file);
 			chars[length] = '\0';
-			return (hoshi_Object *)hoshi_takeString(tracker, chars, length);
+			return (hoshi_Object *)hoshi_makeString(tracker, true, chars, length);
 		}
 	}
 	fprintf(stderr, "internal error: hoshi_readObjectFromFile got a value of an unknown type: %d", type);

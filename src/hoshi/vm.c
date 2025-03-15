@@ -3,6 +3,7 @@
 
 #include "vm.h"
 #include "chunk.h"
+#include "memory.h"
 #include "value.h"
 #include "object.h"
 #include <stdarg.h>
@@ -89,7 +90,7 @@ static void hoshi_concatenate(hoshi_VM *vm)
 	memcpy(chars + a->length, b->chars, b->length);
 	chars[length] = '\0';
 
-	hoshi_ObjectString *result = hoshi_takeString(&vm->tracker, chars, length);
+	hoshi_ObjectString *result = hoshi_makeString(&vm->tracker, true, chars, length);
 	hoshi_push(vm, HOSHI_OBJECT(result));
 }
 

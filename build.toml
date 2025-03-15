@@ -1,5 +1,5 @@
 cc = "gcc"
-mode = "prod" # debug, default, prod
+mode = "default" # debug, default, prod
 memwatch = false
 opts = ["-Wall"]
 debug_opts = ["-g3"]
