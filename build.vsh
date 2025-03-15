@@ -14,8 +14,7 @@ struct Config {
 pub mut:
 	cc   string    = 'gcc'
 	mode BuildMode = .default
-	// opts []string = ['-Wall']
-	opts []string = []
+	opts []string = ['-Wall']
 }
 
 struct Module {
@@ -68,7 +67,7 @@ config := Config{}
 libhoshi := Module{
 	name:       'libhoshi.so'
 	sources:    files(
-		path:       'src/hoshi/'
+		path:       'src/hoshi'
 		excluded:   ['main.c']
 		additional: ['src/binio/binio.c']
 	)
@@ -93,7 +92,7 @@ hir := Module{
 	name:       'hir'
 	depends:    ['libhoshi.so']
 	sources:    files(
-		path:       'src/hir/'
+		path:       'src/hir'
 		additional: ['target/libhoshi.so', 'src/common/thirdparty/asprintf.c']
 	)
 	debug_opts: [

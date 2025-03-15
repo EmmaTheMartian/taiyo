@@ -44,6 +44,7 @@ bool hoshi_valuesEqual(hoshi_Value a, hoshi_Value b)
 				memcmp(aString->chars, bString->chars, aString->length) == 0;
 		}
 	}
+	return false;
 }
 
 #endif

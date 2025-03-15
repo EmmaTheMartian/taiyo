@@ -4,12 +4,11 @@
 #include "debug.h"
 #include "vm.h"
 #include "config.h"
+#include "common.h"
 #include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-static int exitCode = 0;
 
 static const char *help =
 "Usage: hoshi [options]\n file"
@@ -51,18 +50,6 @@ static void quit(int code)
 	CLEAN(inputFile);
 	exit(code);
 #undef CLEAN
-}
-
-static void setflag(char **flag)
-{
-	printf("setflag: `%s` to `%s`\n", *flag, optarg);
-	/* Free the flag if it is already set. */
-	if (*flag) {
-		free(flag);
-	}
-	*flag = malloc(strlen(optarg) * sizeof(char));
-	strcpy(*flag, optarg);
-	free(flag);
 }
 
 int main(int argc, char *argv[])
@@ -199,10 +186,10 @@ static void runFile(const char *path)
 	/* Load chunk */
 	hoshi_Chunk chunk;
 	hoshi_initChunk(&chunk);
-	bool readSuccess = hoshi_readChunkFromFile(&vm.tracker, &chunk, file);
+	bool readSuccess = hoshi_readChunkFromFile(&vm.tracker, &chunk, file, HOSHI_VERSION);
 	fclose(file);
 	if (!readSuccess) {
-		fputs("error: file had invalid header (are you sure it was a Hoshi file?)\n", stderr);
+		fputs("error: failed to read chunk (see above error)\n", stderr);
 		quit(1);
 	}
 
@@ -237,10 +224,10 @@ static void disassembleFile(const char *path)
 	puts("  | Loading");
 	hoshi_Chunk chunk;
 	hoshi_initChunk(&chunk);
-	bool readSuccess = hoshi_readChunkFromFile(&vm.tracker, &chunk, file);
+	bool readSuccess = hoshi_readChunkFromFile(&vm.tracker, &chunk, file, HOSHI_VERSION);
 	fclose(file);
 	if (!readSuccess) {
-		fputs("error: file had invalid header (are you sure it was a Hoshi file?)\n", stderr);
+		fputs("error: failed to read chunk (see above error)\n", stderr);
 		quit(1);
 	}
 

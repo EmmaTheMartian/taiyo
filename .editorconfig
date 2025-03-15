@@ -4,9 +4,5 @@ end_of_line = lf
 insert_final_newline = true
 trim_trailing_whitespace = true
 
-[*.{c,h,tai,hir}]
+[*.{c,h,tai,hir,v}]
 indent_style = tab
-
-[*.zig]
-indent_style = space
-indent_size = 4

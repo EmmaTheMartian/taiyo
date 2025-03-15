@@ -2,12 +2,15 @@
 #define __HOSHI_CHUNK_LOADER_H__
 
 #include "../binio/binio.h"
+#include "common.h"
 #include "chunk_loader.h"
 #include "chunk.h"
 #include "memory.h"
 #include "object.h"
 #include "config.h"
 #include "value.h"
+#include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 /* These macros get #undef'd at the end of the file */
@@ -35,6 +38,8 @@ hoshi_Object *hoshi_readObjectFromFile(hoshi_ObjectTracker *tracker, FILE *file)
 			return (hoshi_Object *)hoshi_takeString(tracker, chars, length);
 		}
 	}
+	fprintf(stderr, "internal error: hoshi_readObjectFromFile got a value of an unknown type: %d", type);
+	return NULL;
 }
 
 hoshi_Value hoshi_readValueFromFile(hoshi_ObjectTracker *tracker, FILE *file)
@@ -61,9 +66,11 @@ hoshi_Value hoshi_readValueFromFile(hoshi_ObjectTracker *tracker, FILE *file)
 			return HOSHI_OBJECT(object);
 		}
 	}
+	fprintf(stderr, "internal error: hoshi_readValueFromFile got a value of an unknown type: %d", type);
+	return HOSHI_NIL();
 }
 
-bool hoshi_readChunkFromFile(hoshi_ObjectTracker *tracker, hoshi_Chunk *chunk, FILE *file)
+bool hoshi_readChunkFromFile(hoshi_ObjectTracker *tracker, hoshi_Chunk *chunk, FILE *file, hoshi_Version expectedVersion)
 {
 	hoshi_initChunk(chunk);
 
@@ -98,7 +105,7 @@ bool hoshi_readChunkFromFile(hoshi_ObjectTracker *tracker, hoshi_Chunk *chunk, F
 		for (int i = 0; i < 7; i++) {
 			DBG("  Magic number: (i: %d, expected: %d, got: %d)\n", i, hoshi_magicNumber[i], magic[i]);
 			if (hoshi_magicNumber[i] != magic[i]) {
-				DBG("Magic number invalid\n");
+				fprintf(stderr, "error: failed to read chunk: magic number is invalid\n");
 				return false;
 			}
 		}
@@ -111,7 +118,11 @@ bool hoshi_readChunkFromFile(hoshi_ObjectTracker *tracker, hoshi_Chunk *chunk, F
 		uint16_t major = binio_readU16(file);
 		uint16_t minor = binio_readU16(file);
 		DBG("Version: %d.%d\n", major, minor);
-		/* TODO: verify against... something */
+		hoshi_Version version = { major, minor };
+		if (hoshi_versionOlderThan(version, expectedVersion)) {
+			fprintf(stderr, "error: failed to read chunk: file version older than minimum readable version (got %d.%d, expected at least %d.%d)\n", major, minor, expectedVersion.major, expectedVersion.minor);
+			return false;
+		}
 	}
 
 	/* read constants */

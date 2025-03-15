@@ -14,29 +14,6 @@
 	#define WRITE_CHUNK_FLAG(flag, file) ;
 #endif
 
-static int hoshi_decodeBytes(hoshi_Chunk *chunk, const char *source, size_t offset)
-{
-#define WRITE_AND_OFFSET() hoshi_writeChunk(chunk, source[offset], 1)
-	/* first byte is assumed to be the instruction */
-	hoshi_OpCode op = source[offset];
-	hoshi_writeChunk(chunk, op, 1);
-
-	/* some instructions have multiple arguments after them, which we need to decode too */
-	switch (op) {
-		case HOSHI_OP_CONSTANT:
-			WRITE_AND_OFFSET();
-			return 2;
-		case HOSHI_OP_CONSTANT_LONG:
-			WRITE_AND_OFFSET();
-			WRITE_AND_OFFSET();
-			WRITE_AND_OFFSET();
-			return 3;
-		default:
-			return 1;
-	}
-#undef WRITE_AND_OFFSET
-}
-
 void hoshi_writeObjectToFile(hoshi_Object *object, FILE *file)
 {
 	/* Write type */
@@ -137,87 +114,6 @@ void hoshi_writeChunkToFile(hoshi_Chunk *chunk, FILE *file)
 
 	DBG("Wrote chunk\n");
 #undef DBG
-}
-
-/* Writes the chunk to a C file which interprets the chunk. Weird, but it works. */
-void hoshi_writeChunkToC(hoshi_Chunk *chunk, FILE *file)
-{
-	fprintf(file, "#include <hoshi/vm.h>\n#include <hoshi/chunk.h>\n\nstatic uint8_t bytecode[] = {\n");
-	for (size_t i = 0; i < chunk->count; i++) {
-		fprintf(file, "\t%d,\n", chunk->code[i]);
-	}
-	fprintf(file, "};\n\nstatic hoshi_Value constants[] = {\n");
-	for (size_t i = 0; i < chunk->constants.count; i++) {
-		//FIXME
-		fprintf(file, "\t%g,\n", chunk->constants.values[i]);
-	}
-	fprintf(file, "};\n\nstatic hoshi_LineStart lines[] = {\n");
-	for (size_t i = 0; i < chunk->lineCount; i++) {
-		fprintf(file, "\t{ %d, %d },\n", chunk->lines[i].offset, chunk->lines[i].line);
-	}
-	fprintf(
-		file,
-		"};\n\n"
-		"static hoshi_Chunk chunk = {\n"
-			"\t%d,\n"
-			"\t%d,\n"
-			"\t&bytecode[0],\n"
-			"\t{ %d, %d, &constants[0] },\n"
-			"\t%d,\n"
-			"\t%d,\n"
-			"\t&lines[0],\n"
-		"};\n\n"
-		"int main(void)\n"
-		"{\n"
-			"\thoshi_VM vm;\n"
-			"\thoshi_initVM(&vm);\n"
-			"\thoshi_runChunk(&vm, &chunk);\n"
-			"\thoshi_freeVM(&vm);\n"
-			"\treturn 0;\n"
-		"}\n",
-		chunk->count,
-		chunk->count,
-		chunk->constants.count,
-		chunk->constants.count,
-		chunk->lineCount,
-		chunk->lineCount
-	);
-}
-
-/* Same as hoshi_writeChunkToC but minimized, i.e, non-human readable */
-void hoshi_writeChunkToCNonHuman(hoshi_Chunk *chunk, FILE *file)
-{
-	fprintf(file, "#include<hoshi/vm.h>\n#include<hoshi/chunk.h>\nstatic uint8_t a[]={");
-	for (size_t i = 0; i < chunk->count; i++) {
-		fprintf(file, "%d,", chunk->code[i]);
-	}
-	fprintf(file, "};static hoshi_Value b[]={");
-	for (size_t i = 0; i < chunk->constants.count; i++) {
-		//FIXME
-		fprintf(file, "%g,", chunk->constants.values[i]);
-	}
-	fprintf(file, "};static hoshi_LineStart c[]={");
-	for (size_t i = 0; i < chunk->lineCount; i++) {
-		fprintf(file, "{%d,%d},", chunk->lines[i].offset, chunk->lines[i].line);
-	}
-	fprintf(
-		file,
-		"};"
-		"static hoshi_Chunk d={%d,%d,&a[0],{%d,%d,&b[0]},%d,%d,&c[0]};"
-		"int main(void){"
-			"hoshi_VM v;"
-			"hoshi_initVM(&v);"
-			"hoshi_runChunk(&v,&d);"
-			"hoshi_freeVM(&v);"
-			"return 0;"
-		"}",
-		chunk->count,
-		chunk->count,
-		chunk->constants.count,
-		chunk->constants.count,
-		chunk->lineCount,
-		chunk->lineCount
-	);
 }
 
 #undef WRITE_CHUNK_FLAG

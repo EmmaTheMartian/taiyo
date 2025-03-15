@@ -3,3 +3,7 @@
 
 *.tai linguist-language=Taiyo
 *.hir linguist-language=HIR
+
+*.v linguist-language=V
+*.vv linguist-language=V
+*.vsh linguist-language=V

@@ -10,8 +10,6 @@
 #include <getopt.h>
 #include <string.h>
 
-static int exitCode = 0;
-
 static const char *help =
 "Usage: hir [options]\n file"
 "Compile and execute HIR files.\n"
@@ -34,12 +32,10 @@ typedef enum {
 	NONE,
 	RUN,
 	COMPILE,
-	TRANSPILE,
 } Mode;
 
 typedef enum {
 	BACKEND_HOSHI,
-	BACKEND_C,
 } Backend;
 
 static Mode mode = NONE;
@@ -51,9 +47,7 @@ static char *ccFlags = NULL;
 static bool printDisasm = false;
 
 static void runFile(const char *path);
-static void transpileFileToC(const char *inputFilePath, const char *outputFilePath, bool human);
 static void compileFileToHoshi(const char *inputFilePath, const char *outputFilePath);
-static void compileFileToC(const char *inputFilePath, const char *outputFilePath);
 
 static void quit(int code)
 {
@@ -119,13 +113,6 @@ int main(int argc, char *argv[])
 				}
 				mode = COMPILE;
 				break;
-			case 't':
-				if (mode) {
-					fputs("error: only one of -r, -c, or -t can be provided at a time.\n", stderr);
-					quit(2);
-				}
-				mode = TRANSPILE;
-				break;
 			/* Config */
 			case 'd':
 				printDisasm = true;
@@ -133,10 +120,8 @@ int main(int argc, char *argv[])
 			case 'b':
 				if (memcmp(optarg, "hoshi", strlen(optarg)) == 0) {
 					backend = BACKEND_HOSHI;
-				} else if (memcmp(optarg, "c", strlen(optarg)) == 0) {
-					backend = BACKEND_C;
 				} else {
-					fputs("error: no such backend (backends: hoshi, c)", stderr);
+					fputs("error: no such backend (backends: hoshi)", stderr);
 					quit(1);
 				}
 				break;
@@ -193,13 +178,7 @@ int main(int argc, char *argv[])
 				case BACKEND_HOSHI:
 					compileFileToHoshi(inputFile, outputFile == NULL ? "out.hoshi" : outputFile);
 					break;
-				case BACKEND_C:
-					compileFileToC(inputFile, outputFile == NULL ? "a.out" : outputFile);
-					break;
 			}
-			break;
-		case TRANSPILE:
-			transpileFileToC(inputFile, outputFile == NULL ? "out.c" : outputFile, true);
 			break;
 	}
 
@@ -257,56 +236,6 @@ static void runFile(const char *path)
 	}
 }
 
-static void transpileFileToC(const char *inputFilePath, const char *outputFilePath, bool human)
-{
-	printf("--| %s\n", inputFilePath);
-	char *source = taiyoCommon_readFile(inputFilePath);
-
-#if HIR_ENABLE_TOKEN_DUMP
-	puts("== Token Dump ==");
-	hir_Lexer lexer;
-	hir_initLexer(&lexer, source);
-	hir_lex(&lexer);
-	puts("== End Token Dump ==");
-#endif
-
-	/* Initialize VM */
-	hoshi_VM vm;
-	hoshi_initVM(&vm);
-
-	/* Compile code */
-	puts("  | Compiling");
-	hoshi_Chunk chunk;
-	hoshi_initChunk(&chunk);
-	hir_compileString(&vm, &chunk, source);
-
-	/* Disassembly */
-	if (printDisasm) {
-		hoshi_disassembleChunk(&chunk, "hoshi");
-	}
-
-	/* Write to C file */
-	printf("  | Writing to %s\n", outputFilePath);
-	FILE *outFile = fopen(outputFilePath, "wb");
-	if (outFile == NULL) {
-		fprintf(stderr, "Failed to open file: %s\n", outputFilePath);
-		hoshi_freeChunk(&chunk);
-		free(source);
-		quit(74);
-	}
-	if (human) {
-		hoshi_writeChunkToC(&chunk, outFile);
-	} else {
-		hoshi_writeChunkToCNonHuman(&chunk, outFile);
-	}
-
-	/* Clean up */
-	fclose(outFile);
-	hoshi_freeChunk(&chunk);
-	hoshi_freeVM(&vm);
-	free(source);
-}
-
 static void compileFileToHoshi(const char *inputFilePath, const char *outputFilePath)
 {
 	printf("--| %s\n", inputFilePath);
@@ -352,27 +281,4 @@ static void compileFileToHoshi(const char *inputFilePath, const char *outputFile
 	hoshi_freeChunk(&chunk);
 	hoshi_freeVM(&vm);
 	free(source);
-}
-
-static void compileFileToC(const char *inputFilePath, const char *outputFilePath)
-{
-	transpileFileToC(inputFilePath, "tmp.c", false);
-
-	/* Compile the C file */
-	puts("  | Compiling tmp.c");
-	char *command = getCompileCommand("tmp.c", outputFilePath);
-	printf("  | -> %s\n", command);
-	if (system(command)) {
-		fputs("error: compilation failed (see above error)\n", stderr);
-		free(command);
-		quit(1);
-	}
-	free(command);
-
-	/* Remove C file */
-	puts("  | Cleaning up");
-	if (system("rm tmp.c")) {
-		fputs("error: compilation failed (see above error)\n", stderr);
-		quit(1);
-	}
 }
