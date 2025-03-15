@@ -2,19 +2,17 @@
 
 import build
 import arrays
+import toml
 
 // Utilities //
-enum BuildMode {
-	debug
-	default
-	release
-}
-
 struct Config {
 pub mut:
-	cc   string    = 'gcc'
-	mode BuildMode = .default
-	opts []string = ['-Wall']
+	cc         string
+	mode       string
+	memwatch   bool
+	opts       []string
+	debug_opts []string
+	prod_opts  []string
 }
 
 struct Module {
@@ -28,18 +26,38 @@ pub:
 }
 
 fn (self Module) build(config Config) {
+	// Get options
 	mut opts := config.opts.clone()
 	opts << self.build_opts
 	match config.mode {
-		.debug {
+		'debug' {
+			opts << config.debug_opts
 			opts << self.debug_opts
 		}
-		.default {}
-		.release {
+		'default' {}
+		'prod' {
+			opts << config.prod_opts
 			opts << self.prod_opts
 		}
+		else {
+			eprintln('error: unknown mode: ${config.mode}')
+		}
 	}
-	cmd := '${config.cc} -o target/${self.name} ${opts.join(' ')} ${self.sources.join(' ')}'
+
+	if config.memwatch {
+		opts << '-DMEMWATCH'
+		opts << '-DMEMWATCH_STDIO'
+		opts << '-Iexternal/memwatch/'
+	}
+
+	// Get sources
+	mut sources := self.sources.clone()
+	if config.memwatch {
+		sources << 'external/memwatch/memwatch.c'
+	}
+
+	// Run command
+	cmd := '${config.cc} -o target/${self.name} ${opts.join(' ')} ${sources.join(' ')}'
 	println('${self.name}: ${cmd}')
 	system(cmd)
 }
@@ -61,15 +79,25 @@ fn files(params FilesParams) []string {
 	return arrays.append(paths, params.additional)
 }
 
+@[inline]
+fn dir(mut context build.BuildContext, path string) {
+	context.artifact(
+		name: path
+		run:  fn [path] (self build.Task) ! {
+			mkdir(path)!
+		}
+	)
+}
+
 // Config //
-config := Config{}
+config := toml.decode[Config](read_file('build.toml')!)!
 
 libhoshi := Module{
 	name:       'libhoshi.so'
 	sources:    files(
 		path:       'src/hoshi'
 		excluded:   ['main.c']
-		additional: ['src/binio/binio.c']
+		additional: ['src/hoshi/binio/binio.c']
 	)
 	build_opts: ['-fPIC', '-shared']
 	debug_opts: [
@@ -93,7 +121,7 @@ hir := Module{
 	depends:    ['libhoshi.so']
 	sources:    files(
 		path:       'src/hir'
-		additional: ['target/libhoshi.so', 'src/common/thirdparty/asprintf.c']
+		additional: ['target/libhoshi.so']
 	)
 	debug_opts: [
 		'-DHIR_ENABLE_PRINT_CODE=1',
@@ -112,10 +140,8 @@ modules := [libhoshi, hoshi, hir, taiyo]
 
 mut context := build.context(default: 'all')
 
-context.artifact(
-	name: 'target'
-	run:  |self| mkdir('target')!
-)
+dir(mut context, 'target')
+dir(mut context, 'external')
 
 for m in modules {
 	context.task(
@@ -131,6 +157,24 @@ context.task(
 	name:    'all'
 	depends: modules.map(|it| it.name)
 	run:     |self| none
+)
+
+context.artifact(
+	name:    'external/memwatch'
+	depends: ['external']
+	run:     fn (self build.Task) ! {
+		system('git clone https://github.com/linkdata/memwatch external/memwatch/')
+	}
+)
+
+context.task(
+	name: 'clean'
+	run:  fn (self build.Task) ! {
+		rmdir_all('target') or {}
+		rmdir_all('external') or {}
+		rm('out.hoshi') or {}
+		rm('memwatch.log') or {}
+	}
 )
 
 context.run()

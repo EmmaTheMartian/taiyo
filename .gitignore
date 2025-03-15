@@ -15,3 +15,9 @@
 
 # .gitpod.yml
 /v/
+
+# External, non-submodule'd libraries
+/external/
+
+# Logs
+/memwatch.log

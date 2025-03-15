@@ -1,8 +1,7 @@
 /* HIR - A **very** minimalist front-end for Hoshi, literally Hoshi ASM. */
 
-#include "../common/fileio.c"
-#include "../common/thirdparty/asprintf.h"
 #include "compiler.h"
+#include "config.h"
 #include "../hoshi/debug.h"
 #include "../hoshi/chunk_writer.h"
 #include <stdio.h>
@@ -10,14 +9,17 @@
 #include <getopt.h>
 #include <string.h>
 
+#if MEMWATCH
+#include "memwatch.h"
+#endif
+
 static const char *help =
 "Usage: hir [options]\n file"
 "Compile and execute HIR files.\n"
-"One of -r, -c, or -t must be passed.\n\n"
+"One of -r, or -c must be passed.\n\n"
 "Options:\n"
 "  -r, --run             Interpret the input file instead of compiling it.\n"
 "  -c, --compile         Compile the input file.\n"
-"  -t, --transpile       Transpile the input file to C.\n"
 "  -b, --backend         Set the backend to compile to [default: hoshi].\n"
 "  -C, --cc=<cc>         Set the C compiler [default: gcc].\n"
 "  -f, --flags=<flags>   Provide flags to the C compiler.\n"
@@ -40,10 +42,10 @@ typedef enum {
 
 static Mode mode = NONE;
 static Backend backend = BACKEND_HOSHI;
-static char *inputFile = NULL;
-static char *outputFile = NULL;
-static char *cc = NULL;
-static char *ccFlags = NULL;
+static char *inputFile = "";
+static char *outputFile = "";
+static char *cc = "gcc";
+static char *ccFlags = "";
 static bool printDisasm = false;
 
 static void runFile(const char *path);
@@ -51,20 +53,15 @@ static void compileFileToHoshi(const char *inputFilePath, const char *outputFile
 
 static void quit(int code)
 {
-#define CLEAN(pointer) { if (pointer == NULL) { free(pointer); } }
-
-	CLEAN(outputFile);
-	CLEAN(inputFile);
-	CLEAN(cc);
-	CLEAN(ccFlags);
+#if MEMWATCH
+	mwTerm();
+#endif
 
 	exit(code);
-#undef CLEAN
 }
 
 static void setflag(char **flag)
 {
-	printf("setflag: `%s` to `%s`\n", *flag, optarg);
 	/* Free the flag if it is already set. */
 	if (*flag) {
 		free(flag);
@@ -76,6 +73,9 @@ static void setflag(char **flag)
 
 int main(int argc, char *argv[])
 {
+#if MEMWATCH
+	mwInit();
+#endif
 	static struct option longopts[] = {
 		{ "run",           no_argument,       NULL, 'r' },
 		{ "compile",       no_argument,       NULL, 'c' },
@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
 	}
 
 	int opt;
-	while ((opt = getopt_long(argc, argv, ":rctdb:C:f:o:h", longopts, NULL)) != -1) {
+	while ((opt = getopt_long(argc, argv, ":rcdb:C:f:o:h", longopts, NULL)) != -1) {
 		switch (opt) {
 			/* Actions */
 			case 'r':
@@ -151,16 +151,13 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	/* Set default options */
-	if (cc == NULL) { cc = "gcc"; }
-	if (ccFlags == NULL) { ccFlags = ""; }
-
 	/* Get input file */
 	if (optind < argc) {
 		char **arg = &argv[optind];
-		int len = strlen(*arg);
+		int len = strlen(*arg) + 1;
 		inputFile = malloc(sizeof(char) * len);
 		memcpy(inputFile, *arg, len);
+		inputFile[len + 1] = '\0';
 	} else {
 		fputs("error: no input file specified.\n", stderr);
 		quit(2);
@@ -185,23 +182,38 @@ int main(int argc, char *argv[])
 	quit(0);
 }
 
-static char *getCompileCommand(const char *inputFilePath, const char *outputFilePath)
+static char *hir_readFile(const char *filePath)
 {
-	char *command;
-	asprintf(
-		&command,
-		"%s -o %s %s %s",
-		cc,
-		outputFilePath,
-		ccFlags,
-		inputFilePath
-	);
-	return command;
+	FILE *file = fopen(filePath, "rb");
+	if (file == NULL) {
+		fprintf(stderr, "error: could not open file: %s\n", filePath);
+		quit(74);
+	}
+
+	rewind(file);
+	fseek(file, 0L, SEEK_END);
+	size_t fileSize = ftell(file);
+	rewind(file);
+
+	char *buffer = malloc(sizeof(char) * fileSize);
+	if (buffer == NULL) {
+		fprintf(stderr, "error: not enough memory to read `%s`", filePath);
+		quit(74);
+	}
+	size_t bytesRead = fread(buffer, sizeof(char), fileSize, file);
+	if (bytesRead < fileSize) {
+		fprintf(stderr, "error: could not read file `%s`", filePath);
+		quit(74);
+	}
+	buffer[fileSize] = '\0';
+
+	fclose(file);
+	return buffer;
 }
 
 static void runFile(const char *path)
 {
-	char *source = taiyoCommon_readFile(path);
+	char *source = hir_readFile(path);
 
 #if HIR_ENABLE_TOKEN_DUMP
 	puts("== Token Dump ==");
@@ -239,7 +251,7 @@ static void runFile(const char *path)
 static void compileFileToHoshi(const char *inputFilePath, const char *outputFilePath)
 {
 	printf("--| %s\n", inputFilePath);
-	char *source = taiyoCommon_readFile(inputFilePath);
+	char *source = hir_readFile(inputFilePath);
 
 #if HIR_ENABLE_TOKEN_DUMP
 	puts("== Token Dump ==");

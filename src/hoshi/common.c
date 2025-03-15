@@ -4,6 +4,10 @@
 #include "common.h"
 #include <stdbool.h>
 
+#if MEMWATCH
+#include "memwatch.h"
+#endif
+
 #define HOSHI_CHECK_FUNC(name, op) \
 	bool name (hoshi_Version a, hoshi_Version b) \
 	{ \

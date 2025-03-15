@@ -12,8 +12,8 @@
 ## Build Guide
 
 ```sh
-zig build
-# or without Zig:
+./build.vsh
+# or without V:
 sh build.sh libhoshi hoshi hir
 ```
 
@@ -50,9 +50,3 @@ If you do have Hoshi installed, you can compile as normally (`hir -c ./path/to/e
   - I cannot give enough praise to Robert Nystrom for this _masterpiece_ of knowledge.
     If you want to make an interpreter, **absolutely** use this book.
     It's completely free on the web too <3
-
-## External Libraries
-
-- asprintf by jwerle \
-  License: MIT \
-  Original source: <https://github.com/jwerle/asprintf.c>

@@ -1,4 +1,3 @@
-#include "../common/fileio.c"
 #include "chunk.h"
 #include "chunk_loader.h"
 #include "debug.h"
@@ -9,6 +8,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#if MEMWATCH
+#include "memwatch.h"
+#endif
 
 static const char *help =
 "Usage: hoshi [options]\n file"
@@ -36,7 +39,7 @@ typedef enum {
 } Mode;
 
 static Mode mode = NONE;
-static char *inputFile = NULL;
+static char *inputFile = "";
 
 #if HOSHI_ENABLE_NOP_MODE
 static void nop();
@@ -46,10 +49,7 @@ static void disassembleFile(const char *path);
 
 static void quit(int code)
 {
-#define CLEAN(pointer) { if (pointer == NULL) { free(pointer); } }
-	CLEAN(inputFile);
 	exit(code);
-#undef CLEAN
 }
 
 int main(int argc, char *argv[])
@@ -170,9 +170,6 @@ static void nop()
 
 static void runFile(const char *path)
 {
-	size_t fileSize;
-	char *source = taiyoCommon_readFileWithSize(path, &fileSize);
-
 	FILE *file = fopen(path, "rb");
 	if (!file) {
 		fprintf(stderr, "error: failed to open file: %s", path);
@@ -200,7 +197,6 @@ static void runFile(const char *path)
 	int code = vm.exitCode;
 	hoshi_freeChunk(&chunk);
 	hoshi_freeVM(&vm);
-	free(source);
 
 	quit(code);
 }

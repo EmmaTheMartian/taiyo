@@ -16,14 +16,15 @@
 
 #ifndef HOSHI_COUNT_LEAKED_BYTES
 	/* When true, the hoshi_realloc() function in memory.c will count bytes to ensure no memory is leaked.
-	 * This does come with a very very minor performance toll, but being able to track down leaked memory is absolutely worth it. */
-	#define HOSHI_COUNT_LEAKED_BYTES 1
+	 * This does come with a very very minor performance toll, but being able to track down leaked memory is absolutely worth it.
+	 * This is fairly inaccurate since it only counts calls with hoshi_realloc(), so for more proper memory leak testing, use memwatch and/or valgrind. */
+	#define HOSHI_COUNT_LEAKED_BYTES 0
 #endif
 
 #ifndef HOSHI_TRACE_ALLOCATIONS
 	/* When `1`, hoshi_realloc() will log all allocations. This will result in potentially a LOT of stdout, but helps in debugging memory leaks.
 	 * If HOSHI_COUNT_LEAKED_BYTES is `1` as well, then leaked bytes are logged with allocations. */
-	#define HOSHI_TRACE_ALLOCATIONS 1
+	#define HOSHI_TRACE_ALLOCATIONS 0
 #endif
 
 /* Disassembler Configuration */

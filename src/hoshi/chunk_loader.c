@@ -1,7 +1,7 @@
 #ifndef __HOSHI_CHUNK_LOADER_H__
 #define __HOSHI_CHUNK_LOADER_H__
 
-#include "../binio/binio.h"
+#include "binio/binio.h"
 #include "common.h"
 #include "chunk_loader.h"
 #include "chunk.h"

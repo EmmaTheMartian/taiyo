@@ -9,6 +9,10 @@
 #include <stdio.h>
 #endif
 
+#if MEMWATCH
+#include "memwatch.h"
+#endif
+
 /* This file contains a **lot** of code toggled at compile-time, so instead of writing tons of #ifs everywhere, I'll just make a simple macro instead.
  * These get #undef'd at the end of the file */
 #if HOSHI_COUNT_LEAKED_BYTES

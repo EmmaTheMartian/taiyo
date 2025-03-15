@@ -5,7 +5,7 @@
 #include "object.h"
 #include "common.h"
 #include "config.h"
-#include "../binio/binio.h"
+#include "binio/binio.h"
 
 /* These macros get #undef'd at the end of the file */
 #if HOSHI_ENABLE_CHUNK_DEBUG_FLAGS
