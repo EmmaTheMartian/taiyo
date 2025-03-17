@@ -4,6 +4,12 @@ This document is primarily for me to design parts of Hoshi either before
 implementation or so that I can rant about something that I will or will not do
 in Hoshi.
 
+## Hash Tables
+
+**CURRENT IMPLEMENTATION:** Open addressing with FNV-1a.
+
+**PLAN:** Separate chaining with SipHash.
+
 ## Implicit Type Conversions
 
 The Hoshi VM will not perform any implicit type conversions whatsoever. Explicit

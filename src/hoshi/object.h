@@ -4,6 +4,7 @@
 #include "value.h"
 #include "memory.h"
 #include "vm.h"
+#include <stdint.h>
 #include <string.h>
 
 #define HOSHI_TYPEOF_OBJECT(value) (HOSHI_AS_OBJECT(value)->type)
@@ -29,6 +30,7 @@ struct hoshi_ObjectString {
 	bool ownsChars;
 	int length; /* TODO: LEB128 */
 	const char *chars;
+	uint64_t hash;
 };
 
 /* Allocates an object of the given size and type. */

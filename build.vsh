@@ -23,6 +23,7 @@ pub:
 	build_opts []string
 	debug_opts []string
 	prod_opts  []string
+	include    []string
 }
 
 fn (self Module) build(config Config) {
@@ -56,8 +57,11 @@ fn (self Module) build(config Config) {
 		sources << 'external/memwatch/memwatch.c'
 	}
 
+	// Get includes
+	includes := self.include.map('-L${it}').join(' ')
+
 	// Run command
-	cmd := '${config.cc} -o target/${self.name} ${opts.join(' ')} ${sources.join(' ')}'
+	cmd := '${config.cc} -o target/${self.name} ${includes} ${opts.join(' ')} ${sources.join(' ')}'
 	println('${self.name}: ${cmd}')
 	system(cmd)
 }
@@ -97,7 +101,10 @@ libhoshi := Module{
 	sources:    files(
 		path:       'src/hoshi'
 		excluded:   ['main.c']
-		additional: ['src/hoshi/binio/binio.c']
+		additional: [
+			'src/hoshi/binio/binio.c',
+			'src/hoshi/siphash/siphash.c',
+		]
 	)
 	build_opts: ['-fPIC', '-shared']
 	debug_opts: [
@@ -108,13 +115,15 @@ libhoshi := Module{
 		'-DHOSHI_ENABLE_CHUNK_READ_DEBUG_INFO=1',
 		'-DHOSHI_ENABLE_CHUNK_DEBUG_FLAGS=1',
 	]
+	include:    [
+		'thirdparty/siphash',
+	]
 }
 hoshi := Module{
 	...libhoshi
-	name:       'hoshi'
-	depends:    ['libhoshi.so']
-	sources:    ['src/hoshi/main.c', 'target/libhoshi.so']
-	build_opts: []
+	name:    'hoshi'
+	depends: ['libhoshi.so']
+	sources: ['src/hoshi/main.c', 'target/libhoshi.so']
 }
 hir := Module{
 	name:       'hir'

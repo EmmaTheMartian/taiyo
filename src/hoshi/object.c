@@ -4,8 +4,19 @@
 #include "object.h"
 #include "memory.h"
 #include "value.h"
+#include "siphash.h"
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+
+/* YOU ARE A BOZO!! */
+static char hoshi_siphashKey[16] = {
+	'Y', 'O', 'U', ' ',
+	'A', 'R', 'E', ' ',
+	'A', ' ',
+	'B', 'O', 'Z', 'O',
+	'!', '!'
+};
 
 hoshi_Object *hoshi_allocateObject(hoshi_ObjectTracker *tracker, size_t size, hoshi_ObjectType type)
 {
@@ -30,12 +41,25 @@ void hoshi_freeObject(hoshi_Object *object)
 	}
 }
 
+/* TODO: Switch to SipHash. Current implementation is FNV-1a */
+static uint32_t hoshi_hashString(const char *key, int length)
+{
+	uint32_t hash = 2166136261u;
+	for (int i = 0; i < length; i++) {
+		hash ^= (uint8_t)key[i];
+		hash *= 16777619;
+	}
+	return hash;
+}
+
 hoshi_ObjectString *hoshi_makeString(hoshi_ObjectTracker *tracker, bool ownsString, char *chars, int length)
 {
 	hoshi_ObjectString *string = HOSHI_ALLOCATE_OBJECT(tracker, hoshi_ObjectString, HOSHI_OBJTYPE_STRING);
 	string->ownsChars = ownsString;
 	string->length = length;
 	string->chars = chars;
+	// string->hash = siphash24(chars, length, hoshi_siphashKey);
+	string->hash = hoshi_hashString(chars, length);
 	return string;
 }
 
