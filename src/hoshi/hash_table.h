@@ -2,6 +2,7 @@
 #define __HOSHI_HASH_TABLE_H__
 
 #include "value.h"
+#include <stdint.h>
 
 #define HOSHI_TABLE_MAX_LOAD 0.75
 
@@ -24,5 +25,6 @@ bool hoshi_tableSet(hoshi_Table *table, hoshi_ObjectString *key, hoshi_Value val
 bool hoshi_tableGet(hoshi_Table *table, hoshi_ObjectString *key, hoshi_Value *value);
 bool hoshi_tableDelete(hoshi_Table *table, hoshi_ObjectString *key);
 void hoshi_tableCopyAllFrom(hoshi_Table *from, hoshi_Table *to);
+hoshi_ObjectString *hoshi_tableFindString(hoshi_Table *table, const char *chars, int length, uint64_t hash);
 
 #endif

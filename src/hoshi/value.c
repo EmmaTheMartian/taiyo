@@ -36,13 +36,8 @@ bool hoshi_valuesEqual(hoshi_Value a, hoshi_Value b)
 			return true;
 		case HOSHI_TYPE_BOOL:
 			return HOSHI_AS_BOOL(a) == HOSHI_AS_BOOL(b);
-		case HOSHI_TYPE_OBJECT: {
-			hoshi_ObjectString *aString = HOSHI_AS_STRING(a);
-			hoshi_ObjectString *bString = HOSHI_AS_STRING(b);
-			return
-				aString->length == bString->length &&
-				memcmp(aString->chars, bString->chars, aString->length) == 0;
-		}
+		case HOSHI_TYPE_OBJECT:
+			return HOSHI_AS_OBJECT(a) == HOSHI_AS_OBJECT(b);
 	}
 	return false;
 }

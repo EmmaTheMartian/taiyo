@@ -2,9 +2,11 @@
 #define __HOSHI_OBJECT_C__
 
 #include "object.h"
+#include "hash_table.h"
 #include "memory.h"
 #include "value.h"
 #include "siphash.h"
+#include "vm.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -52,14 +54,20 @@ static uint32_t hoshi_hashString(const char *key, int length)
 	return hash;
 }
 
-hoshi_ObjectString *hoshi_makeString(hoshi_ObjectTracker *tracker, bool ownsString, char *chars, int length)
+hoshi_ObjectString *hoshi_makeString(hoshi_VM *vm, bool ownsString, char *chars, int length)
 {
-	hoshi_ObjectString *string = HOSHI_ALLOCATE_OBJECT(tracker, hoshi_ObjectString, HOSHI_OBJTYPE_STRING);
+	uint64_t hash = hoshi_hashString(chars, length);
+
+	hoshi_ObjectString *interned = hoshi_tableFindString(&vm->strings, chars, length, hash);
+	if (interned != NULL) return interned;
+
+	hoshi_ObjectString *string = HOSHI_ALLOCATE_OBJECT(&vm->tracker, hoshi_ObjectString, HOSHI_OBJTYPE_STRING);
 	string->ownsChars = ownsString;
 	string->length = length;
 	string->chars = chars;
 	// string->hash = siphash24(chars, length, hoshi_siphashKey);
-	string->hash = hoshi_hashString(chars, length);
+	string->hash = hash;
+	hoshi_tableSet(vm->strings, string, HOSHI_NIL());
 	return string;
 }
 

@@ -3,6 +3,7 @@
 
 #include "chunk.h"
 #include "config.h"
+#include "hash_table.h"
 #include "memory.h"
 #include "value.h"
 
@@ -17,6 +18,7 @@ typedef struct {
 	uint8_t *ip; /* Instruction Pointer */
 	hoshi_Value stack[HOSHI_STACK_SIZE];
 	hoshi_Value *stackTop;
+	hoshi_Table *strings;
 	int exitCode;
 	hoshi_ObjectTracker tracker;
 } hoshi_VM;

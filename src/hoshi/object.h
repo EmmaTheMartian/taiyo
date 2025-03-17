@@ -41,7 +41,7 @@ void hoshi_freeObject(hoshi_Object *object);
 
 /* Helper function to allocate a string with the given characters and length.
  * Set `ownsChars` to true when the characters are owned by the object, and false when they are heap allocated and not owned by the object. */
-hoshi_ObjectString *hoshi_makeString(hoshi_ObjectTracker *tracker, bool ownsChars, char *chars, int length);
+hoshi_ObjectString *hoshi_makeString(hoshi_VM *vm, bool ownsChars, char *chars, int length);
 
 /* Prints an object value. */
 void hoshi_printObject(hoshi_Value value);

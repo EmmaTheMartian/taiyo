@@ -3,6 +3,7 @@
 
 #include "vm.h"
 #include "chunk.h"
+#include "hash_table.h"
 #include "memory.h"
 #include "value.h"
 #include "object.h"
@@ -34,13 +35,14 @@ void hoshi_initVM(hoshi_VM *vm)
 	hoshi_resetStack(vm);
 	vm->exitCode = 0;
 	vm->tracker.objects = NULL;
-	hoshi_freeAllObjects(vm);
+	hoshi_initTable(vm->strings);
 }
 
 extern size_t hoshi_leakedBytes;
 
 void hoshi_freeVM(hoshi_VM *vm)
 {
+	hoshi_freeTable(vm->strings);
 	hoshi_freeAllObjects(vm);
 
 	#if HOSHI_COUNT_LEAKED_BYTES

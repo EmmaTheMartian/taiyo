@@ -5,8 +5,10 @@
 #include "memory.h"
 #include "value.h"
 #include "object.h"
+#include <cstdint>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
 void hoshi_initTable(hoshi_Table *table)
 {
@@ -133,6 +135,29 @@ void hoshi_tableCopyAllFrom(hoshi_Table *from, hoshi_Table *to)
 		if (entry->key != NULL) {
 			hoshi_tableSet(to, entry->key, entry->value);
 		}
+	}
+}
+
+hoshi_ObjectString *hoshi_tableFindString(hoshi_Table *table, const char *chars, int length, uint64_t hash)
+{
+	if (table->count == 0) {
+		return false;
+	}
+
+	uint32_t index = hash % table->capacity;
+	for (;;) {
+		hoshi_TableEntry *entry = &table->entries[index];
+		if (entry->key == NULL) {
+			/* stop if we find an empty non-tombstone entry */
+			if (HOSHI_IS_NIL(entry->value)) {
+				return NULL;
+			}
+		} else if (entry->key->length == length && entry->key->hash == hash && memcmp(entry->key->chars, chars, length)) {
+			/* found it! */
+			return entry->key;
+		}
+
+		index = (index + 1) % table->capacity;
 	}
 }
 
