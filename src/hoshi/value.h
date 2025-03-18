@@ -5,7 +5,7 @@
 
 #define HOSHI_NUMBER(value) ((hoshi_Value){ HOSHI_TYPE_NUMBER, { .number = value } })
 #define HOSHI_BOOL(value) ((hoshi_Value){ HOSHI_TYPE_BOOL, { .boolean = value } })
-#define HOSHI_NIL() ((hoshi_Value){ HOSHI_TYPE_NIL, { .number = 0 } })
+#define HOSHI_NIL ((hoshi_Value){ HOSHI_TYPE_NIL, { .number = 0 } })
 #define HOSHI_OBJECT(value) ((hoshi_Value){ HOSHI_TYPE_OBJECT, { .object = (hoshi_Object *)value } })
 
 #define HOSHI_AS_NUMBER(value) ((value).as.number)

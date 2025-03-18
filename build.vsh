@@ -1,10 +1,9 @@
-#!/usr/bin/env -S v run
+#!/usr/bin/env -S v -enable-globals run
 
 import build
 import arrays
 import toml
 
-// Utilities //
 struct Config {
 pub mut:
 	cc         string
@@ -26,7 +25,9 @@ pub:
 	include    []string
 }
 
-fn (self Module) build(config Config) {
+__global config Config
+
+fn (self Module) build() {
 	// Get options
 	mut opts := config.opts.clone()
 	opts << self.build_opts
@@ -93,18 +94,13 @@ fn dir(mut context build.BuildContext, path string) {
 	)
 }
 
-// Config //
-config := toml.decode[Config](read_file('build.toml')!)!
-
+// Modules
 libhoshi := Module{
 	name:       'libhoshi.so'
 	sources:    files(
 		path:       'src/hoshi'
 		excluded:   ['main.c']
-		additional: [
-			'src/hoshi/binio/binio.c',
-			'src/hoshi/siphash/siphash.c',
-		]
+		additional: ['src/hoshi/binio/binio.c']
 	)
 	build_opts: ['-fPIC', '-shared']
 	debug_opts: [
@@ -123,6 +119,7 @@ hoshi := Module{
 	...libhoshi
 	name:    'hoshi'
 	depends: ['libhoshi.so']
+	build_opts: []
 	sources: ['src/hoshi/main.c', 'target/libhoshi.so']
 }
 hir := Module{
@@ -147,17 +144,27 @@ taiyo := Module{
 
 modules := [libhoshi, hoshi, hir, taiyo]
 
+config = toml.decode[Config](read_file('build.toml')!)!
 mut context := build.context(default: 'all')
 
 dir(mut context, 'target')
 dir(mut context, 'external')
 
+for mode in ['debug', 'default', 'prod'] {
+	context.task(
+		name: '.${mode}',
+		run:  fn [mode] (self build.Task) ! {
+			config = Config{...config, mode: mode}
+		}
+	)
+}
+
 for m in modules {
 	context.task(
 		name:    m.name
 		depends: arrays.append(['target'], m.depends)
-		run:     fn [m, config] (self build.Task) ! {
-			m.build(config)
+		run:     fn [m] (self build.Task) ! {
+			m.build()
 		}
 	)
 }

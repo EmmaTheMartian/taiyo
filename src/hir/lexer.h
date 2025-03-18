@@ -2,11 +2,11 @@
 #define __HIR_LEXER_H__
 
 typedef enum {
-	// Single-character tokens
+	/* Single-character tokens */
 	HIR_TOKEN_DOT,
 	HIR_TOKEN_EQUALS,
 	HIR_TOKEN_DOLLAR,
-	// Literals
+	/* Literals */
 	HIR_TOKEN_ID,
 	HIR_TOKEN_NUMBER,
 	HIR_TOKEN_STRING,
@@ -21,6 +21,8 @@ typedef enum {
 	HIR_TOKEN_MUL,
 	HIR_TOKEN_DIV,
 	HIR_TOKEN_NEGATE,
+	HIR_TOKEN_DEFGLOBAL,
+	HIR_TOKEN_GETGLOBAL,
 	HIR_TOKEN_NOT,
 	HIR_TOKEN_AND,
 	HIR_TOKEN_OR,
@@ -32,6 +34,7 @@ typedef enum {
 	HIR_TOKEN_GTEQ,
 	HIR_TOKEN_LTEQ,
 	HIR_TOKEN_CONCAT,
+	HIR_TOKEN_PRINT,
 	HIR_TOKEN_RETURN,
 	HIR_TOKEN_EXIT,
 	/* Misc */

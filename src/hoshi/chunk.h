@@ -16,6 +16,9 @@ typedef enum {
 	HOSHI_OP_TRUE,
 	HOSHI_OP_FALSE,
 	HOSHI_OP_NIL,
+	/* Variables */
+	HOSHI_OP_DEFGLOBAL,
+	HOSHI_OP_GETGLOBAL,
 	/* Math */
 	HOSHI_OP_ADD,
 	HOSHI_OP_SUB,
@@ -37,6 +40,7 @@ typedef enum {
 	/* String ops */
 	HOSHI_OP_CONCAT,
 	/* Misc */
+	HOSHI_OP_PRINT,
 	HOSHI_OP_RETURN,
 	HOSHI_OP_EXIT,
 } hoshi_OpCode;

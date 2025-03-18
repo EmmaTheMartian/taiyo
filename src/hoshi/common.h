@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#define UINT24_MAX 16777215
+
 #define HOSHI_VERSION_MAJOR 1
 #define HOSHI_VERSION_MINOR 0
 #define HOSHI_VERSION_STRING "1.0"

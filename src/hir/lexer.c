@@ -38,30 +38,40 @@ static bool hir_isAtEnd(hir_Lexer *lexer)
 	return *lexer->current == '\0';
 }
 
-static char hir_advance(hir_Lexer *lexer)
+static inline void hir_skip(hir_Lexer *lexer)
+{
+	lexer->current++;
+}
+
+static inline char hir_advance(hir_Lexer *lexer)
 {
 	lexer->current++;
 	return lexer->current[-1];
 }
 
-static char hir_peek(hir_Lexer *lexer)
+static inline char hir_peek(hir_Lexer *lexer)
 {
 	return *lexer->current;
 }
 
-static char hir_peekNext(hir_Lexer *lexer)
+static inline char hir_peekNext(hir_Lexer *lexer)
 {
 	return hir_isAtEnd(lexer) ? '\0' : lexer->current[1];
 }
 
-static bool isAlpha(char c)
+static inline bool isAlpha(char c)
 {
 	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_';
 }
 
-static bool isDigit(char c)
+static inline bool isDigit(char c)
 {
 	return c >= '0' && c <= '9';
+}
+
+static inline bool isValidID(char c)
+{
+	return isAlpha(c) || isDigit(c) || c == '$' || c == '-';
 }
 
 static void hir_skipWhitespace(hir_Lexer *lexer)
@@ -72,15 +82,15 @@ static void hir_skipWhitespace(hir_Lexer *lexer)
 			case ' ':
 			case '\r':
 			case '\t':
-				hir_advance(lexer);
+				hir_skip(lexer);
 				break;
 			case '\n':
 				lexer->line++;
-				hir_advance(lexer);
+				hir_skip(lexer);
 				break;
 			case '#':
 				while (hir_peek(lexer) != '\n' && !hir_isAtEnd(lexer)) {
-					hir_advance(lexer);
+					hir_skip(lexer);
 				}
 				break;
 			default:
@@ -91,37 +101,51 @@ static void hir_skipWhitespace(hir_Lexer *lexer)
 
 static hir_Token hir_string(hir_Lexer *lexer)
 {
+	lexer->start++; /* skip first `"` "*/
 	while (hir_peek(lexer) != '"' && !hir_isAtEnd(lexer)) {
 		if (hir_peek(lexer) == '\n') {
 			lexer->line++;
 		}
-		hir_advance(lexer);
+		hir_skip(lexer);
 	}
 
 	if (hir_isAtEnd(lexer)) {
 		return hir_errorToken(lexer, "unterminated string");
 	}
 
-	hir_advance(lexer); /* Consume the closing `"` */
-	return hir_makeToken(lexer, HIR_TOKEN_STRING);
+	hir_Token token = hir_makeToken(lexer, HIR_TOKEN_STRING);
+	hir_skip(lexer); /* Consume the closing `"` */
+	return token;
 }
 
 static hir_Token hir_number(hir_Lexer *lexer)
 {
 	while (isDigit(hir_peek(lexer))) {
-		hir_advance(lexer);
+		hir_skip(lexer);
 	}
 
 	/* Look for a decimal */
 	if (hir_peek(lexer) == '.' && isDigit(hir_peekNext(lexer))) {
-		hir_advance(lexer); /* Consume the `.` */
+		hir_skip(lexer); /* Consume the `.` */
 
 		while (isDigit(hir_peek(lexer))) {
-			hir_advance(lexer);
+			hir_skip(lexer);
 		}
 	}
 
 	return hir_makeToken(lexer, HIR_TOKEN_NUMBER);
+}
+
+static hir_Token hir_identifier(hir_Lexer *lexer)
+{
+	/* skip the `$` */
+	lexer->start++;
+
+	while (isValidID(hir_peek(lexer))) {
+		hir_skip(lexer);
+	}
+
+	return hir_makeToken(lexer, HIR_TOKEN_ID);
 }
 
 static hir_TokenType hir_checkKeyword(hir_Lexer *lexer, int start, int length, const char *rest, hir_TokenType type)
@@ -147,7 +171,15 @@ static hir_TokenType hir_operatorType(hir_Lexer *lexer)
 			break;
 		}
 		case 'c': return hir_checkKeyword(lexer, 1, 5, "oncat", HIR_TOKEN_CONCAT);
-		case 'd': return hir_checkKeyword(lexer, 1, 2, "iv", HIR_TOKEN_DIV);
+		case 'd': {
+			if (lexer->current - lexer->start > 1) {
+				switch (lexer->start[1]) {
+					case 'i': return hir_checkKeyword(lexer, 2, 1, "v", HIR_TOKEN_DIV);
+					case 'e': return hir_checkKeyword(lexer, 2, 7, "fglobal", HIR_TOKEN_DEFGLOBAL);
+				}
+			}
+			break;
+		}
 		case 'e': {
 			if (lexer->current - lexer->start > 1) {
 				switch (lexer->start[1]) {
@@ -160,11 +192,17 @@ static hir_TokenType hir_operatorType(hir_Lexer *lexer)
 		case 'f': return hir_checkKeyword(lexer, 1, 4, "alse", HIR_TOKEN_FALSE);
 		case 'g': {
 			if (lexer->current - lexer->start > 1) {
-				if (hir_checkKeyword(lexer, 1, 3, "teq", HIR_TOKEN_GTEQ)) {
-					return HIR_TOKEN_GTEQ;
+				switch (lexer->start[1]) {
+					case 'e': return hir_checkKeyword(lexer, 2, 7, "tglobal", HIR_TOKEN_GETGLOBAL);
+					case 't': {
+						if (hir_checkKeyword(lexer, 2, 2, "eq", HIR_TOKEN_GTEQ)) {
+							return HIR_TOKEN_GTEQ;
+						}
+						return hir_checkKeyword(lexer, 1, 1, "t", HIR_TOKEN_GT);
+					}
 				}
-				return hir_checkKeyword(lexer, 1, 1, "t", HIR_TOKEN_GT);
 			}
+			break;
 		}
 		case 'l': {
 			if (lexer->current - lexer->start > 1) {
@@ -173,6 +211,7 @@ static hir_TokenType hir_operatorType(hir_Lexer *lexer)
 				}
 				return hir_checkKeyword(lexer, 1, 1, "t", HIR_TOKEN_LT);
 			}
+			break;
 		}
 		case 'm': return hir_checkKeyword(lexer, 1, 2, "ul", HIR_TOKEN_MUL);
 		case 'n': {
@@ -197,6 +236,7 @@ static hir_TokenType hir_operatorType(hir_Lexer *lexer)
 		case 'p': {
 			if (lexer->current - lexer->start > 1) {
 				switch (lexer->start[1]) {
+					case 'r': return hir_checkKeyword(lexer, 2, 3, "int", HIR_TOKEN_PRINT);
 					case 'u': return hir_checkKeyword(lexer, 2, 2, "sh", HIR_TOKEN_PUSH);
 					case 'o': return hir_checkKeyword(lexer, 2, 1, "p", HIR_TOKEN_POP);
 				}
@@ -214,7 +254,7 @@ static hir_TokenType hir_operatorType(hir_Lexer *lexer)
 static hir_Token hir_operator(hir_Lexer *lexer)
 {
 	while (isAlpha(hir_peek(lexer)) || isDigit(hir_peek(lexer))) {
-		hir_advance(lexer);
+		hir_skip(lexer);
 	}
 	hir_TokenType type = hir_operatorType(lexer);
 	return type == HIR_TOKEN_ERROR ?
@@ -241,7 +281,7 @@ hir_Token hir_scanToken(hir_Lexer *lexer)
 		switch (c) {
 			case '.': return hir_makeToken(lexer, HIR_TOKEN_DOT);
 			case '=': return hir_makeToken(lexer, HIR_TOKEN_EQUALS);
-			case '$': return hir_makeToken(lexer, HIR_TOKEN_DOLLAR);
+			case '$': return hir_identifier(lexer);
 			case '"': return hir_string(lexer);
 		}
 	}
@@ -271,6 +311,8 @@ void hir_printToken(hir_Token *token)
                 case HIR_TOKEN_MUL: fputs("MUL", stdout); break;
                 case HIR_TOKEN_DIV: fputs("DIV", stdout); break;
                 case HIR_TOKEN_NEGATE: fputs("NEGATE", stdout); break;
+                case HIR_TOKEN_DEFGLOBAL: fputs("DEFGLOBAL", stdout); break;
+                case HIR_TOKEN_GETGLOBAL: fputs("GETGLOBAL", stdout); break;
                 case HIR_TOKEN_NOT: fputs("NOT", stdout); break;
 		case HIR_TOKEN_AND: fputs("AND", stdout); break;
 		case HIR_TOKEN_OR: fputs("OR", stdout); break;
@@ -282,6 +324,7 @@ void hir_printToken(hir_Token *token)
 		case HIR_TOKEN_GTEQ: fputs("GTEQ", stdout); break;
 		case HIR_TOKEN_LTEQ: fputs("LTEQ", stdout); break;
 		case HIR_TOKEN_CONCAT: fputs("CONCAT", stdout); break;
+                case HIR_TOKEN_PRINT: fputs("PRINT", stdout); break;
                 case HIR_TOKEN_RETURN: fputs("RETURN", stdout); break;
                 case HIR_TOKEN_EXIT: fputs("EXIT", stdout); break;
 		// Misc

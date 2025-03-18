@@ -5,8 +5,8 @@
 #include "memory.h"
 #include "value.h"
 #include "object.h"
-#include <cstdint>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -23,12 +23,26 @@ void hoshi_freeTable(hoshi_Table *table)
 	hoshi_initTable(table);
 }
 
-hoshi_TableEntry *hoshi_tableFind(hoshi_Table *table, hoshi_ObjectString *key)
+void hoshi_printTable(hoshi_Table *table)
 {
-	uint32_t index = key->hash % table->capacity;
-	hoshi_TableEntry *tombstone;
+	puts("{");
+	for (int i = 0; i < table->capacity; i++) {
+		hoshi_TableEntry *entry = &table->entries[i];
+		if (entry->key != NULL) {
+			printf("\t [%d] \"%.*s\" = ", i, entry->key->length, entry->key->chars);
+			hoshi_printValue(entry->value);
+			puts(",");
+		}
+	}
+	puts("}");
+}
+
+hoshi_TableEntry *hoshi_tableFind(hoshi_TableEntry *entries, int capacity, hoshi_ObjectString *key)
+{
+	uint32_t index = key->hash % capacity;
+	hoshi_TableEntry *tombstone = NULL;
 	for (;;) {
-		hoshi_TableEntry *entry = &table->entries[index];
+		hoshi_TableEntry *entry = &entries[index];
 		if (entry->key == NULL) {
 			if (HOSHI_IS_NIL(entry->value)) {
 				/* Empty entry */
@@ -43,9 +57,9 @@ hoshi_TableEntry *hoshi_tableFind(hoshi_Table *table, hoshi_ObjectString *key)
 			/* We found the key */
 			return entry;
 		}
-		index = (index + 1) % table->capacity;
+		index = (index + 1) % capacity;
 	}
-	return NULL;
+	// return NULL;
 }
 
 void hoshi_tableAdjustCapacity(hoshi_Table *table, int capacity)
@@ -53,7 +67,7 @@ void hoshi_tableAdjustCapacity(hoshi_Table *table, int capacity)
 	hoshi_TableEntry *entries = HOSHI_ALLOCATE(hoshi_TableEntry, capacity);
 	for (int i = 0; i < capacity; i++) {
 		entries[i].key = NULL;
-		entries[i].value = HOSHI_NIL();
+		entries[i].value = HOSHI_NIL;
 	}
 
 	/* Reinsert old elements */
@@ -64,7 +78,7 @@ void hoshi_tableAdjustCapacity(hoshi_Table *table, int capacity)
 			continue;
 		}
 
-		hoshi_TableEntry *dest = hoshi_tableFind(table, entry->key);
+		hoshi_TableEntry *dest = hoshi_tableFind(entries, capacity, entry->key);
 		dest->key = entry->key;
 		dest->value = entry->value;
 		table->count++;
@@ -85,7 +99,7 @@ bool hoshi_tableSet(hoshi_Table *table, hoshi_ObjectString *key, hoshi_Value val
 		hoshi_tableAdjustCapacity(table, capacity);
 	}
 
-	hoshi_TableEntry *entry = hoshi_tableFind(table, key);
+	hoshi_TableEntry *entry = hoshi_tableFind(table->entries, table->capacity, key);
 	bool isNewKey = entry->key == NULL;
 	if (isNewKey && HOSHI_IS_NIL(entry->value)) {
 		table->count++;
@@ -101,7 +115,7 @@ bool hoshi_tableGet(hoshi_Table *table, hoshi_ObjectString *key, hoshi_Value *va
 		return false;
 	}
 
-	hoshi_TableEntry *entry = hoshi_tableFind(table, key);
+	hoshi_TableEntry *entry = hoshi_tableFind(table->entries, table->capacity, key);
 	if (entry->key == NULL) {
 		return false;
 	}
@@ -116,7 +130,7 @@ bool hoshi_tableDelete(hoshi_Table *table, hoshi_ObjectString *key)
 		return false;
 	}
 
-	hoshi_TableEntry *entry = hoshi_tableFind(table, key);
+	hoshi_TableEntry *entry = hoshi_tableFind(table->entries, table->capacity, key);
 	if (entry->key == NULL) {
 		return false;
 	}
@@ -141,7 +155,7 @@ void hoshi_tableCopyAllFrom(hoshi_Table *from, hoshi_Table *to)
 hoshi_ObjectString *hoshi_tableFindString(hoshi_Table *table, const char *chars, int length, uint64_t hash)
 {
 	if (table->count == 0) {
-		return false;
+		return NULL;
 	}
 
 	uint32_t index = hash % table->capacity;
@@ -152,7 +166,7 @@ hoshi_ObjectString *hoshi_tableFindString(hoshi_Table *table, const char *chars,
 			if (HOSHI_IS_NIL(entry->value)) {
 				return NULL;
 			}
-		} else if (entry->key->length == length && entry->key->hash == hash && memcmp(entry->key->chars, chars, length)) {
+		} else if (entry->key->length == length && entry->key->hash == hash && memcmp(entry->key->chars, chars, length) == 0) {
 			/* found it! */
 			return entry->key;
 		}

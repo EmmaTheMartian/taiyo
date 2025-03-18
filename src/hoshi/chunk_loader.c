@@ -21,7 +21,7 @@
 	#define READ_CHUNK_FLAG(len, file) ;
 #endif
 
-hoshi_Object *hoshi_readObjectFromFile(hoshi_ObjectTracker *tracker, FILE *file)
+hoshi_Object *hoshi_readObjectFromFile(hoshi_VM *vm, FILE *file)
 {
 	/* Read object type */
 	READ_CHUNK_FLAG("/", file);
@@ -35,14 +35,14 @@ hoshi_Object *hoshi_readObjectFromFile(hoshi_ObjectTracker *tracker, FILE *file)
 			char *chars = HOSHI_ALLOCATE(char, length + 1);
 			fread(chars, sizeof(char), length, file);
 			chars[length] = '\0';
-			return (hoshi_Object *)hoshi_makeString(tracker, true, chars, length);
+			return (hoshi_Object *)hoshi_makeString(vm, true, chars, length);
 		}
 	}
 	fprintf(stderr, "internal error: hoshi_readObjectFromFile got a value of an unknown type: %d", type);
 	return NULL;
 }
 
-hoshi_Value hoshi_readValueFromFile(hoshi_ObjectTracker *tracker, FILE *file)
+hoshi_Value hoshi_readValueFromFile(hoshi_VM *vm, FILE *file)
 {
 	/* Read the type identifier */
 	READ_CHUNK_FLAG("#", file);
@@ -60,17 +60,17 @@ hoshi_Value hoshi_readValueFromFile(hoshi_ObjectTracker *tracker, FILE *file)
 			return HOSHI_BOOL(value);
 		}
 		case HOSHI_TYPE_NIL:
-			return HOSHI_NIL();
+			return HOSHI_NIL;
 		case HOSHI_TYPE_OBJECT: {
-			hoshi_Object *object = hoshi_readObjectFromFile(tracker, file);
+			hoshi_Object *object = hoshi_readObjectFromFile(vm, file);
 			return HOSHI_OBJECT(object);
 		}
 	}
 	fprintf(stderr, "internal error: hoshi_readValueFromFile got a value of an unknown type: %d", type);
-	return HOSHI_NIL();
+	return HOSHI_NIL;
 }
 
-bool hoshi_readChunkFromFile(hoshi_ObjectTracker *tracker, hoshi_Chunk *chunk, FILE *file, hoshi_Version expectedVersion)
+bool hoshi_readChunkFromFile(hoshi_VM *vm, hoshi_Chunk *chunk, FILE *file, hoshi_Version expectedVersion)
 {
 	hoshi_initChunk(chunk);
 
@@ -147,7 +147,7 @@ bool hoshi_readChunkFromFile(hoshi_ObjectTracker *tracker, hoshi_Chunk *chunk, F
 		#endif
 		DBG("Reading constants\n");
 		for (size_t i = 0; i < constantCount; i++) {
-			hoshi_Value value = hoshi_readValueFromFile(tracker, file);
+			hoshi_Value value = hoshi_readValueFromFile(vm, file);
 			chunk->constants.values[i] = value;
 #if HOSHI_ENABLE_CHUNK_READ_DEBUG_INFO
 			printf("  | Read constant %zu: ", i);

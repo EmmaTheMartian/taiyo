@@ -3,6 +3,7 @@
 
 #include "vm.h"
 #include "chunk.h"
+#include "common.h"
 #include "hash_table.h"
 #include "memory.h"
 #include "value.h"
@@ -35,14 +36,17 @@ void hoshi_initVM(hoshi_VM *vm)
 	hoshi_resetStack(vm);
 	vm->exitCode = 0;
 	vm->tracker.objects = NULL;
-	hoshi_initTable(vm->strings);
+	hoshi_initTable(&vm->strings);
+	hoshi_initTable(&vm->globals);
+	hoshi_tableSet(&vm->globals, hoshi_makeString(vm, false, "-vm_version", 11), HOSHI_OBJECT(hoshi_makeString(vm, false, HOSHI_VERSION_STRING, strlen(HOSHI_VERSION_STRING))));
 }
 
 extern size_t hoshi_leakedBytes;
 
 void hoshi_freeVM(hoshi_VM *vm)
 {
-	hoshi_freeTable(vm->strings);
+	hoshi_freeTable(&vm->strings);
+	hoshi_freeTable(&vm->globals);
 	hoshi_freeAllObjects(vm);
 
 	#if HOSHI_COUNT_LEAKED_BYTES
@@ -92,7 +96,7 @@ static void hoshi_concatenate(hoshi_VM *vm)
 	memcpy(chars + a->length, b->chars, b->length);
 	chars[length] = '\0';
 
-	hoshi_ObjectString *result = hoshi_makeString(&vm->tracker, true, chars, length);
+	hoshi_ObjectString *result = hoshi_makeString(vm, true, chars, length);
 	hoshi_push(vm, HOSHI_OBJECT(result));
 }
 
@@ -101,6 +105,7 @@ hoshi_InterpretResult hoshi_runNext(hoshi_VM *vm)
 /* Macro shorthands. These get #undef'ed from existence after the for loop below. */
 #define READ_BYTE() (*vm->ip++)
 #define READ_CONSTANT() (vm->chunk->constants.values[READ_BYTE()])
+#define READ_STRING() HOSHI_AS_STRING(READ_CONSTANT())
 #define BINARY_OP(valueType, op)\
 	do { \
 		if (!HOSHI_IS_NUMBER(hoshi_peek(vm, 0)) || !HOSHI_IS_NUMBER(hoshi_peek(vm, 1))) {\
@@ -161,7 +166,24 @@ hoshi_InterpretResult hoshi_runNext(hoshi_VM *vm)
 			}
 			case HOSHI_OP_TRUE: hoshi_push(vm, HOSHI_BOOL(true)); break;
 			case HOSHI_OP_FALSE: hoshi_push(vm, HOSHI_BOOL(false)); break;
-			case HOSHI_OP_NIL: hoshi_push(vm, HOSHI_NIL()); break;
+			case HOSHI_OP_NIL: hoshi_push(vm, HOSHI_NIL); break;
+			/* Variables */
+			case HOSHI_OP_DEFGLOBAL: {
+				hoshi_ObjectString *name = READ_STRING();
+				hoshi_tableSet(&vm->globals, name, hoshi_peek(vm, 0));
+				hoshi_pop(vm);
+				break;
+			}
+			case HOSHI_OP_GETGLOBAL: {
+				hoshi_ObjectString *name = READ_STRING();
+				hoshi_Value value;
+				if (!hoshi_tableGet(&vm->globals, name, &value)) {
+					hoshi_panic(vm, "undefined variable: \"%.*s\"", name->length, name->chars);
+					return HOSHI_INTERPRET_RUNTIME_ERROR;
+				}
+				hoshi_push(vm, value);
+				break;
+			}
 			/* Math */
 			case HOSHI_OP_ADD: BINARY_OP(HOSHI_NUMBER, +); break;
 			case HOSHI_OP_SUB: BINARY_OP(HOSHI_NUMBER, -); break;
@@ -209,9 +231,11 @@ hoshi_InterpretResult hoshi_runNext(hoshi_VM *vm)
 				break;
 			}
 			/* Misc */
-			case HOSHI_OP_RETURN: {
+			case HOSHI_OP_PRINT: {
 				hoshi_printValue(hoshi_pop(vm));
-				puts("");
+				break;
+			}
+			case HOSHI_OP_RETURN: {
 				return HOSHI_INTERPRET_OK;
 			}
 			case HOSHI_OP_EXIT: {
@@ -229,6 +253,7 @@ hoshi_InterpretResult hoshi_runNext(hoshi_VM *vm)
 
 #undef READ_BYTE
 #undef READ_CONSTANT
+#undef READ_STRING
 #undef BINARY_OP
 #undef BINARY_BOOL_OP
 }

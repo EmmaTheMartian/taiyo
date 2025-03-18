@@ -1,0 +1,9 @@
+"VM Version: " print
+getglobal $-vm_version print
+"\n" print
+
+42 defglobal $the_meaning_of_life
+getglobal $the_meaning_of_life print
+"\n" print
+
+0 exit

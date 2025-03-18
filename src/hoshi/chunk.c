@@ -4,6 +4,7 @@
 #include "chunk.h"
 #include "memory.h"
 #include "value.h"
+#include "common.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -89,10 +90,10 @@ void hoshi_writeChunk(hoshi_Chunk *chunk, uint8_t byte, int line)
 void hoshi_writeConstant(hoshi_Chunk *chunk, hoshi_Value value, int line)
 {
 	int index = hoshi_addConstant(chunk, value);
-	if (index < 256) {
+	if (index < UINT8_MAX) {
 		hoshi_writeChunk(chunk, HOSHI_OP_CONSTANT, line);
 		hoshi_writeChunk(chunk, (uint8_t)index, line);
-	} else if (index < 0xFFFFFF) {
+	} else if (index < UINT24_MAX) {
 		hoshi_writeChunk(chunk, HOSHI_OP_CONSTANT_LONG, line);
 		hoshi_writeChunk(chunk, (uint8_t)(index & 0xFF), line);
 		hoshi_writeChunk(chunk, (uint8_t)((index >> 8) & 0xFF), line);

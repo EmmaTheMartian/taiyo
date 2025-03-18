@@ -99,6 +99,9 @@ int hoshi_disassembleInstruction(hoshi_Chunk *chunk, int offset)
 		case HOSHI_OP_TRUE: return hoshi_simpleInstruction("TRUE", offset);
 		case HOSHI_OP_FALSE: return hoshi_simpleInstruction("FALSE", offset);
 		case HOSHI_OP_NIL: return hoshi_simpleInstruction("NIL", offset);
+		/* Variables */
+		case HOSHI_OP_DEFGLOBAL: return hoshi_constantInstruction("DEFGLOBAL", chunk, offset);
+		case HOSHI_OP_GETGLOBAL: return hoshi_constantInstruction("GETGLOBAL", chunk, offset);
 		/* Math */
 		case HOSHI_OP_ADD: return hoshi_simpleInstruction("ADD", offset);
 		case HOSHI_OP_SUB: return hoshi_simpleInstruction("SUB", offset);
@@ -120,6 +123,7 @@ int hoshi_disassembleInstruction(hoshi_Chunk *chunk, int offset)
 		/* String ops */
 		case HOSHI_OP_CONCAT: return hoshi_simpleInstruction("CONCAT", offset);
 		/* Misc */
+		case HOSHI_OP_PRINT: return hoshi_simpleInstruction("PRINT", offset);
 		case HOSHI_OP_RETURN: return hoshi_simpleInstruction("RETURN", offset);
 		case HOSHI_OP_EXIT: return hoshi_simpleInstruction("EXIT", offset);
 		default:

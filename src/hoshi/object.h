@@ -30,7 +30,7 @@ struct hoshi_ObjectString {
 	bool ownsChars;
 	int length; /* TODO: LEB128 */
 	const char *chars;
-	uint64_t hash;
+	uint32_t hash;
 };
 
 /* Allocates an object of the given size and type. */
@@ -42,6 +42,8 @@ void hoshi_freeObject(hoshi_Object *object);
 /* Helper function to allocate a string with the given characters and length.
  * Set `ownsChars` to true when the characters are owned by the object, and false when they are heap allocated and not owned by the object. */
 hoshi_ObjectString *hoshi_makeString(hoshi_VM *vm, bool ownsChars, char *chars, int length);
+
+char *hoshi_formatString(hoshi_VM *vm, const char *string, int length);
 
 /* Prints an object value. */
 void hoshi_printObject(hoshi_Value value);

@@ -195,7 +195,7 @@ static char *hir_readFile(const char *filePath)
 	size_t fileSize = ftell(file);
 	rewind(file);
 
-	char *buffer = malloc(sizeof(char) * fileSize);
+	char *buffer = malloc((sizeof(char) + 1) * fileSize);
 	if (buffer == NULL) {
 		fprintf(stderr, "error: not enough memory to read `%s`", filePath);
 		quit(74);
