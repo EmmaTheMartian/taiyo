@@ -244,7 +244,15 @@ static hir_TokenType hir_operatorType(hir_Lexer *lexer)
 			break;
 		}
 		case 'r': return hir_checkKeyword(lexer, 1, 5, "eturn", HIR_TOKEN_RETURN);
-		case 's': return hir_checkKeyword(lexer, 1, 2, "ub", HIR_TOKEN_SUB);
+		case 's': {
+			if (lexer->current - lexer->start > 1) {
+				switch (lexer->start[1]) {
+					case 'e': return hir_checkKeyword(lexer, 2, 7, "tglobal", HIR_TOKEN_SETGLOBAL);
+					case 'u': return hir_checkKeyword(lexer, 2, 1, "b", HIR_TOKEN_SUB);
+				}
+			}
+			break;
+		}
 		case 't': return hir_checkKeyword(lexer, 1, 3, "rue", HIR_TOKEN_TRUE);
 		case 'x': return hir_checkKeyword(lexer, 1, 2, "or", HIR_TOKEN_XOR);
 	}
@@ -312,6 +320,7 @@ void hir_printToken(hir_Token *token)
                 case HIR_TOKEN_DIV: fputs("DIV", stdout); break;
                 case HIR_TOKEN_NEGATE: fputs("NEGATE", stdout); break;
                 case HIR_TOKEN_DEFGLOBAL: fputs("DEFGLOBAL", stdout); break;
+                case HIR_TOKEN_SETGLOBAL: fputs("SETGLOBAL", stdout); break;
                 case HIR_TOKEN_GETGLOBAL: fputs("GETGLOBAL", stdout); break;
                 case HIR_TOKEN_NOT: fputs("NOT", stdout); break;
 		case HIR_TOKEN_AND: fputs("AND", stdout); break;

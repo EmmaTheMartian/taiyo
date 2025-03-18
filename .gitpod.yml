@@ -1,9 +1,14 @@
 tasks:
   - name: "Init"
     init: |
+      # Install V
       git clone https://github.com/emmathemartian/v # using my fork for now since it has the `build` module. after it gets merged I will change this to vlang/v
       cd v
       make
+      # Install mdformat
+      sudo apt update && sudo apt install -y pipx
+      pipx install mdformat
+      pipx inject mdformat mdformat-gfm mdformat-frontmatter mdformat-footnote mdformat-gfm-alerts
     command: |
       # this needs to be executed every time
       sudo ./v/v symlink

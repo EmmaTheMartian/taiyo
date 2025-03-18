@@ -18,6 +18,7 @@ typedef enum {
 	HOSHI_OP_NIL,
 	/* Variables */
 	HOSHI_OP_DEFGLOBAL,
+	HOSHI_OP_SETGLOBAL,
 	HOSHI_OP_GETGLOBAL,
 	/* Math */
 	HOSHI_OP_ADD,

@@ -6,4 +6,8 @@ getglobal $-vm_version print
 getglobal $the_meaning_of_life print
 "\n" print
 
+84 defglobal $the_meaning_of_life
+getglobal $the_meaning_of_life print
+"\n" print
+
 0 exit

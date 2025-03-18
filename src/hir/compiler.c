@@ -218,6 +218,7 @@ static void hir_expression(hoshi_VM *vm, hir_Parser *parser, hir_Lexer *lexer)
 		case HIR_TOKEN_DIV: hir_emitByte(parser, HOSHI_OP_DIV); break;
 		case HIR_TOKEN_NEGATE: hir_emitByte(parser, HOSHI_OP_NEGATE); break;
 		case HIR_TOKEN_DEFGLOBAL: hir_defglobal(vm, parser, hir_parseVariable(vm, parser, lexer)); break;
+		case HIR_TOKEN_SETGLOBAL: hir_emitBytes2(parser, HOSHI_OP_SETGLOBAL, hir_parseVariable(vm, parser, lexer)); break;
 		case HIR_TOKEN_GETGLOBAL: hir_emitBytes2(parser, HOSHI_OP_GETGLOBAL, hir_parseVariable(vm, parser, lexer)); break;
 		case HIR_TOKEN_NOT: hir_emitByte(parser, HOSHI_OP_NOT); break;
 		case HIR_TOKEN_AND: hir_emitByte(parser, HOSHI_OP_AND); break;

@@ -174,6 +174,15 @@ hoshi_InterpretResult hoshi_runNext(hoshi_VM *vm)
 				hoshi_pop(vm);
 				break;
 			}
+			case HOSHI_OP_SETGLOBAL: {
+				hoshi_ObjectString *name = READ_STRING();
+				if (hoshi_tableSet(&vm->globals, name, hoshi_peek(vm, 0))) {
+					hoshi_tableDelete(&vm->globals, name); /* delete the zombie value */
+					hoshi_panic(vm, "undefined variable: `%s`", name->chars);
+					return HOSHI_INTERPRET_RUNTIME_ERROR;
+				}
+				break;
+			}
 			case HOSHI_OP_GETGLOBAL: {
 				hoshi_ObjectString *name = READ_STRING();
 				hoshi_Value value;
