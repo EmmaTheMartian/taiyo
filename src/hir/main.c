@@ -62,13 +62,8 @@ static void quit(int code)
 
 static void setflag(char **flag)
 {
-	/* Free the flag if it is already set. */
-	if (*flag) {
-		free(flag);
-	}
 	*flag = malloc(strlen(optarg) * sizeof(char));
 	strcpy(*flag, optarg);
-	free(flag);
 }
 
 int main(int argc, char *argv[])
@@ -280,12 +275,16 @@ static void compileFileToHoshi(const char *inputFilePath, const char *outputFile
 	printf("  | Writing to %s\n", outputFilePath);
 	FILE *outFile = fopen(outputFilePath, "wb");
 	if (outFile == NULL) {
-		fprintf(stderr, "Failed to open file: %s\n", outputFilePath);
+		if (strcmp(outputFilePath, "") == 0) {
+			fprintf(stderr, "error: no output file provided.\n");
+		} else {
+			fprintf(stderr, "error: failed to open file: %s\n", outputFilePath);
+		}
 		hoshi_freeChunk(&chunk);
 		free(source);
 		quit(74);
 	}
-	hoshi_writeChunkToFile(&chunk, outFile);
+	hoshi_writeChunkToFile(&vm, &chunk, outFile);
 
 	/* Clean up */
 	puts("  | Cleaning up");

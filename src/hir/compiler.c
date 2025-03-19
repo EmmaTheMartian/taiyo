@@ -131,7 +131,20 @@ static void hir_emitConstant(hoshi_VM *vm, hir_Parser *parser, hoshi_Value value
 
 static int hir_identifierConstant(hoshi_VM *vm, hir_Parser *parser, hir_Token *name)
 {
-	return hir_makeConstant(vm, parser, HOSHI_OBJECT(hoshi_makeString(vm, false, (char *)name->start, name->length)));
+	/* This key gets freed at the end of compilation. */
+	hoshi_ObjectString *key = hoshi_makeString(vm, false, (char *)name->start, name->length);
+
+	/* Check if it already exists */
+	// hoshi_Value indexValue;
+	// if (hoshi_tableGet(&parser->identifiers, key, &indexValue)) {
+	// 	return HOSHI_AS_NUMBER(indexValue);
+	// } else {
+	// 	uint8_t index = hir_makeConstant(vm, parser, HOSHI_OBJECT(hoshi_makeString(vm, false, (char *)name->start, name->length)));
+	// 	hoshi_tableSet(&parser->identifiers, key, HOSHI_NUMBER(index));
+	// 	return index;
+	// }
+
+	return hoshi_addGlobal(vm, key);
 }
 
 static uint8_t hir_parseVariable(hoshi_VM *vm, hir_Parser *parser, hir_Lexer *lexer)
@@ -249,14 +262,10 @@ bool hir_compileString(hoshi_VM *vm, hoshi_Chunk *chunk, const char *string)
 	parser.hadError = false;
 	parser.panicMode = false;
 	parser.currentChunk = chunk;
+	hoshi_initTable(&parser.identifiers);
 
 	parser.previous.line = 1;
 	parser.current.line = 1;
-
-	/* FIXME: Temporary. Line numbers were breaking without this for whatever reason... */
-	// hoshi_writeChunk(parser.currentChunk, HOSHI_OP_PUSH, 0);
-	// hoshi_writeChunk(parser.currentChunk, -1, 0);
-	// hoshi_writeChunk(parser.currentChunk, HOSHI_OP_POP, 0);
 
 	hir_advance(&parser, &lexer);
 	for (;;) {
@@ -265,9 +274,9 @@ bool hir_compileString(hoshi_VM *vm, hoshi_Chunk *chunk, const char *string)
 			break;
 		}
 	}
-	// hir_consume(&parser, &lexer, HIR_TOKEN_EOF, "Expect end of file");
 
 	hir_endCompiler(&parser);
+	hoshi_freeTable(&parser.identifiers);
 
 	return !parser.hadError;
 }

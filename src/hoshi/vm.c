@@ -3,12 +3,12 @@
 
 #include "vm.h"
 #include "chunk.h"
-#include "common.h"
 #include "hash_table.h"
 #include "memory.h"
 #include "value.h"
 #include "object.h"
 #include <stdarg.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -37,8 +37,8 @@ void hoshi_initVM(hoshi_VM *vm)
 	vm->exitCode = 0;
 	vm->tracker.objects = NULL;
 	hoshi_initTable(&vm->strings);
-	hoshi_initTable(&vm->globals);
-	hoshi_tableSet(&vm->globals, hoshi_makeString(vm, false, "-vm_version", 11), HOSHI_OBJECT(hoshi_makeString(vm, false, HOSHI_VERSION_STRING, strlen(HOSHI_VERSION_STRING))));
+	hoshi_initTable(&vm->globalNames);
+	hoshi_initValueArray(&vm->globalValues);
 }
 
 extern size_t hoshi_leakedBytes;
@@ -46,7 +46,8 @@ extern size_t hoshi_leakedBytes;
 void hoshi_freeVM(hoshi_VM *vm)
 {
 	hoshi_freeTable(&vm->strings);
-	hoshi_freeTable(&vm->globals);
+	hoshi_freeTable(&vm->globalNames);
+	hoshi_freeValueArray(&vm->globalValues);
 	hoshi_freeAllObjects(vm);
 
 	#if HOSHI_COUNT_LEAKED_BYTES
@@ -169,28 +170,42 @@ hoshi_InterpretResult hoshi_runNext(hoshi_VM *vm)
 			case HOSHI_OP_NIL: hoshi_push(vm, HOSHI_NIL); break;
 			/* Variables */
 			case HOSHI_OP_DEFGLOBAL: {
-				hoshi_ObjectString *name = READ_STRING();
-				hoshi_tableSet(&vm->globals, name, hoshi_peek(vm, 0));
-				hoshi_pop(vm);
+				vm->globalValues.values[READ_BYTE()] = hoshi_pop(vm);
+				// hoshi_ObjectString *name = READ_STRING();
+				// hoshi_tableSet(&vm->globals, name, hoshi_peek(vm, 0));
+				// hoshi_pop(vm);
 				break;
 			}
 			case HOSHI_OP_SETGLOBAL: {
-				hoshi_ObjectString *name = READ_STRING();
-				if (hoshi_tableSet(&vm->globals, name, hoshi_peek(vm, 0))) {
-					hoshi_tableDelete(&vm->globals, name); /* delete the zombie value */
-					hoshi_panic(vm, "undefined variable: `%s`", name->chars);
+				uint8_t index = READ_BYTE();
+				if (HOSHI_IS_NIL(vm->globalValues.values[index])) {
+					hoshi_panic(vm, "undefined variable: `%.*s`", vm->globalNames.entries[index].key->length, vm->globalNames.entries[index].key->chars);
 					return HOSHI_INTERPRET_RUNTIME_ERROR;
 				}
+				vm->globalValues.values[READ_BYTE()] = hoshi_peek(vm, 0);
+				// hoshi_ObjectString *name = READ_STRING();
+				// if (hoshi_tableSet(&vm->globals, name, hoshi_peek(vm, 0))) {
+				// 	hoshi_tableDelete(&vm->globals, name); /* delete the zombie value */
+				// 	hoshi_panic(vm, "undefined variable: `%s`", name->chars);
+				// 	return HOSHI_INTERPRET_RUNTIME_ERROR;
+				// }
 				break;
 			}
 			case HOSHI_OP_GETGLOBAL: {
-				hoshi_ObjectString *name = READ_STRING();
-				hoshi_Value value;
-				if (!hoshi_tableGet(&vm->globals, name, &value)) {
-					hoshi_panic(vm, "undefined variable: \"%.*s\"", name->length, name->chars);
+				uint8_t index = READ_BYTE();
+				hoshi_Value value = vm->globalValues.values[index];
+				if (HOSHI_IS_NIL(value)) {
+					hoshi_panic(vm, "undefined variable: `%.*s`", vm->globalNames.entries[index].key->length, vm->globalNames.entries[index].key->chars);
 					return HOSHI_INTERPRET_RUNTIME_ERROR;
 				}
 				hoshi_push(vm, value);
+				// hoshi_ObjectString *name = READ_STRING();
+				// hoshi_Value value;
+				// if (!hoshi_tableGet(&vm->globals, name, &value)) {
+				// 	hoshi_panic(vm, "undefined variable: \"%.*s\"", name->length, name->chars);
+				// 	return HOSHI_INTERPRET_RUNTIME_ERROR;
+				// }
+				// hoshi_push(vm, value);
 				break;
 			}
 			/* Math */
@@ -271,7 +286,30 @@ hoshi_InterpretResult hoshi_runChunk(hoshi_VM *vm, hoshi_Chunk *chunk)
 {
 	vm->chunk = chunk;
 	vm->ip = vm->chunk->code;
+
+#if HOSHI_ENABLE_GLOBAL_NAME_DUMP
+	puts("-- Global Dump --");
+	for (int i = 0; i < vm->globalNames.count; i++) {
+		if (vm->globalNames.entries[i].key != NULL) {
+			printf("  [%d] = %.*s\n", i, vm->globalNames.entries[i].key->length, vm->globalNames.entries[i].key->chars);
+		}
+	}
+#endif
+
 	return hoshi_runNext(vm);
+}
+
+uint8_t hoshi_addGlobal(hoshi_VM *vm, hoshi_ObjectString *name)
+{
+	hoshi_Value index;
+	if (hoshi_tableGet(&vm->globalNames, name, &index)) {
+		return (uint8_t)HOSHI_AS_NUMBER(index);
+	}
+
+	uint8_t newIndex = (uint8_t)vm->globalValues.count;
+	hoshi_writeValueArray(&vm->globalValues, HOSHI_NIL);
+	hoshi_tableSet(&vm->globalNames, name, HOSHI_NUMBER((double)newIndex));
+	return newIndex;
 }
 
 #endif

@@ -6,6 +6,8 @@
 #include "common.h"
 #include "config.h"
 #include "binio/binio.h"
+#include "value.h"
+#include <stdio.h>
 
 /* These macros get #undef'd at the end of the file */
 #if HOSHI_ENABLE_CHUNK_DEBUG_FLAGS
@@ -56,7 +58,7 @@ void hoshi_writeValueToFile(hoshi_Value *value, FILE *file)
 	}
 }
 
-void hoshi_writeChunkToFile(hoshi_Chunk *chunk, FILE *file)
+void hoshi_writeChunkToFile(hoshi_VM *vm, hoshi_Chunk *chunk, FILE *file)
 {
 #if HOSHI_ENABLE_CHUNK_WRITE_DEBUG_INFO
 	#define DBG(format, ...) printf("[CHUNK_WRITE_DEBUG_INFO] (offset: %06zu bytes) " format , ftell(file) __VA_OPT__(,) __VA_ARGS__)
@@ -89,6 +91,20 @@ void hoshi_writeChunkToFile(hoshi_Chunk *chunk, FILE *file)
 		hoshi_writeValueToFile(&chunk->constants.values[i], file);
 	}
 	DBG("Wrote constant pool\n");
+
+	/* global variable names */
+	WRITE_CHUNK_FLAG(".globalVariableNames", file);
+	binio_writeU16(vm->globalNames.count, file);
+	DBG("Wrote global variable name count (%d)\n", vm->globalNames.count);
+	for (size_t i = 0; i < vm->globalNames.capacity; i++) {
+		hoshi_ObjectString *name = vm->globalNames.entries[i].key;
+		if (name != NULL) {
+			DBG("  | Writing global variable name %zu: %.*s\n", i, name->length, name->chars);
+			binio_writeU32(name->length, file);
+			fwrite(name->chars, sizeof(char), name->length, file);
+		}
+	}
+	DBG("Wrote global variable names\n");
 
 	/* instructions */
 	WRITE_CHUNK_FLAG(".code", file);

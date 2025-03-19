@@ -12,6 +12,11 @@
 	#define HOSHI_STACK_SIZE 256
 #endif
 
+#ifndef HOSHI_ENABLE_GLOBAL_NAME_DUMP
+	/* Set to `1` to enable a dump of all global names when the VM starts. */
+	#define HOSHI_ENABLE_GLOBAL_NAME_DUMP 1
+#endif
+
 /* Memory configuration */
 
 #ifndef HOSHI_COUNT_LEAKED_BYTES

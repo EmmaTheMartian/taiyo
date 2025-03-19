@@ -6,6 +6,7 @@
 #include "hash_table.h"
 #include "memory.h"
 #include "value.h"
+#include <stdint.h>
 
 typedef enum {
 	HOSHI_INTERPRET_OK,
@@ -19,7 +20,8 @@ typedef struct {
 	hoshi_Value stack[HOSHI_STACK_SIZE];
 	hoshi_Value *stackTop;
 	hoshi_Table strings;
-	hoshi_Table globals;
+	hoshi_Table globalNames;
+	hoshi_ValueArray globalValues;
 	int exitCode;
 	hoshi_ObjectTracker tracker;
 } hoshi_VM;
@@ -32,5 +34,6 @@ void hoshi_push(hoshi_VM *vm, hoshi_Value value);
 hoshi_Value hoshi_pop(hoshi_VM *vm);
 hoshi_InterpretResult hoshi_runNext(hoshi_VM *vm);
 hoshi_InterpretResult hoshi_runChunk(hoshi_VM *vm, hoshi_Chunk *chunk);
+uint8_t hoshi_addGlobal(hoshi_VM *vm, hoshi_ObjectString *name);
 
 #endif

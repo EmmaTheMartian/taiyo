@@ -159,6 +159,14 @@ for mode in ['debug', 'default', 'prod'] {
 	)
 }
 
+context.task(
+	name: '.memwatch',
+	depends: ['external/memwatch']
+	run: fn (self build.Task) ! {
+		config = Config{...config, memwatch: true}
+	}
+)
+
 for m in modules {
 	context.task(
 		name:    m.name

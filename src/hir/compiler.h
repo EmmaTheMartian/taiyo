@@ -12,6 +12,7 @@ typedef struct {
 	bool hadError;
 	bool panicMode;
 	hoshi_Chunk *currentChunk;
+	hoshi_Table identifiers;
 } hir_Parser;
 
 /* Compile the given string. */

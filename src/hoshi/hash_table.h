@@ -22,6 +22,7 @@ void hoshi_initTable(hoshi_Table *table);
 void hoshi_freeTable(hoshi_Table *table);
 void hoshi_printTable(hoshi_Table *table);
 hoshi_TableEntry *hoshi_tableFind(hoshi_TableEntry *entries, int capacity, hoshi_ObjectString *key);
+void hoshi_tableAdjustCapacity(hoshi_Table *table, int capacity);
 bool hoshi_tableSet(hoshi_Table *table, hoshi_ObjectString *key, hoshi_Value value);
 bool hoshi_tableGet(hoshi_Table *table, hoshi_ObjectString *key, hoshi_Value *value);
 bool hoshi_tableDelete(hoshi_Table *table, hoshi_ObjectString *key);

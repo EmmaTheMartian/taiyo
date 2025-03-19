@@ -183,7 +183,7 @@ static void runFile(const char *path)
 	/* Load chunk */
 	hoshi_Chunk chunk;
 	hoshi_initChunk(&chunk);
-	bool readSuccess = hoshi_readChunkFromFile(&vm.tracker, &chunk, file, HOSHI_VERSION);
+	bool readSuccess = hoshi_readChunkFromFile(&vm, &chunk, file, HOSHI_VERSION);
 	fclose(file);
 	if (!readSuccess) {
 		fputs("error: failed to read chunk (see above error)\n", stderr);
@@ -220,7 +220,7 @@ static void disassembleFile(const char *path)
 	puts("  | Loading");
 	hoshi_Chunk chunk;
 	hoshi_initChunk(&chunk);
-	bool readSuccess = hoshi_readChunkFromFile(&vm.tracker, &chunk, file, HOSHI_VERSION);
+	bool readSuccess = hoshi_readChunkFromFile(&vm, &chunk, file, HOSHI_VERSION);
 	fclose(file);
 	if (!readSuccess) {
 		fputs("error: failed to read chunk (see above error)\n", stderr);

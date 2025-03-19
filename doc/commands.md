@@ -12,10 +12,10 @@ For example, to test HIR, you can run:
 gdb -ex=r --args ./target/hir -r tests/hir/hello.hir
 ```
 
-## Valgrind
+## Valgrind and Memwatch
 
 ```sh
-./build.vsh # (in debug mode)
+./build.vsh .debug .memwatch all
 valgrind --track-origins=yes --leak-check=full --show-leak-kinds=all -s <file and options here>
 ```
 

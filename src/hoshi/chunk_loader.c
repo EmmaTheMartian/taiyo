@@ -5,10 +5,13 @@
 #include "common.h"
 #include "chunk_loader.h"
 #include "chunk.h"
+#include "hash_table.h"
 #include "memory.h"
 #include "object.h"
 #include "config.h"
 #include "value.h"
+#include "vm.h"
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -139,12 +142,12 @@ bool hoshi_readChunkFromFile(hoshi_VM *vm, hoshi_Chunk *chunk, FILE *file, hoshi
 			chunk->constants.values = HOSHI_GROW_ARRAY(hoshi_Value, chunk->constants.values, oldCapacity, chunk->constants.capacity);
 		}
 		chunk->constants.count = constantCount;
-		#if HOSHI_ENABLE_CHUNK_READ_DEBUG_INFO
+#if HOSHI_ENABLE_CHUNK_READ_DEBUG_INFO
 		for (size_t i = 0; i < constantCount; i++) {
 			hoshi_printValue(chunk->constants.values[i]);
 			puts("");
 		}
-		#endif
+#endif
 		DBG("Reading constants\n");
 		for (size_t i = 0; i < constantCount; i++) {
 			hoshi_Value value = hoshi_readValueFromFile(vm, file);
@@ -154,6 +157,28 @@ bool hoshi_readChunkFromFile(hoshi_VM *vm, hoshi_Chunk *chunk, FILE *file, hoshi
 			hoshi_printValue(chunk->constants.values[i]);
 			puts("");
 #endif
+		}
+	}
+
+	/* read global variable names */
+	{
+		DBG("Reading global variable names\n");
+		READ_CHUNK_FLAG(".globalVariableNames", file);
+		uint16_t nameCount = binio_readU16(file);
+		DBG("Global variable name count: %d\n", nameCount);
+		/* grow pool if needed */
+		if (vm->globalNames.capacity < nameCount + 1) {
+			DBG("Growing constant pool\n");
+			hoshi_tableAdjustCapacity(&vm->globalNames, nameCount);
+		}
+		vm->globalNames.count = nameCount;
+		DBG("Reading global variable names\n");
+		for (size_t i = 0; i < nameCount; i++) {
+			uint32_t length = binio_readU32(file);
+			char *chars = HOSHI_ALLOCATE(char, length);
+			fread(chars, sizeof(char), length, file);
+			hoshi_addGlobal(vm, hoshi_makeString(vm, true, chars, length));
+			DBG("  | Read global variable name %zu: %.*s\n", i, length, chars);
 		}
 	}
 
