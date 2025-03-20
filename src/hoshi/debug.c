@@ -103,6 +103,11 @@ int hoshi_disassembleInstruction(hoshi_Chunk *chunk, int offset)
 		case HOSHI_OP_DEFGLOBAL: return hoshi_constantInstruction("DEFGLOBAL", chunk, offset);
 		case HOSHI_OP_SETGLOBAL: return hoshi_constantInstruction("SETGLOBAL", chunk, offset);
 		case HOSHI_OP_GETGLOBAL: return hoshi_constantInstruction("GETGLOBAL", chunk, offset);
+		case HOSHI_OP_DEFLOCAL: return hoshi_singleArgInstruction("DEFLOCAL", chunk, offset);
+		case HOSHI_OP_SETLOCAL: return hoshi_singleArgInstruction("SETLOCAL", chunk, offset);
+		case HOSHI_OP_GETLOCAL: return hoshi_singleArgInstruction("GETLOCAL", chunk, offset);
+		case HOSHI_OP_NEWSCOPE: return hoshi_simpleInstruction("NEWSCOPE", offset);
+		case HOSHI_OP_ENDSCOPE: return hoshi_simpleInstruction("ENDSCOPE", offset);
 		/* Math */
 		case HOSHI_OP_ADD: return hoshi_simpleInstruction("ADD", offset);
 		case HOSHI_OP_SUB: return hoshi_simpleInstruction("SUB", offset);

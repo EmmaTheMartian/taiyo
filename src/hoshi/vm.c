@@ -3,6 +3,7 @@
 
 #include "vm.h"
 #include "chunk.h"
+#include "config.h"
 #include "hash_table.h"
 #include "memory.h"
 #include "value.h"
@@ -15,6 +16,11 @@
 #if HOSHI_ENABLE_TRACE_EXECUTION_DEBUGGING
 #include "debug.h"
 #endif
+
+void hoshi_initScope(hoshi_Scope *scope)
+{
+	scope->localCount = 0;
+}
 
 static void hoshi_resetStack(hoshi_VM *vm)
 {
@@ -39,6 +45,13 @@ void hoshi_initVM(hoshi_VM *vm)
 	hoshi_initTable(&vm->strings);
 	hoshi_initTable(&vm->globalNames);
 	hoshi_initValueArray(&vm->globalValues);
+	vm->localsTop = 0;
+	vm->topScope = &vm->scopes[0];
+	vm->errorHandler = NULL;
+
+	for (int i = 0; i < HOSHI_LOCALS_SIZE; i++) {
+		vm->locals[i] = (hoshi_LocalValue){ 0, HOSHI_NIL };
+	}
 }
 
 extern size_t hoshi_leakedBytes;
@@ -66,7 +79,13 @@ void hoshi_panic(hoshi_VM *vm, const char *format, ...)
 	size_t instruction = vm->ip - vm->chunk->code - 1;
 	int line = hoshi_getLine(vm->chunk, instruction);
 	fprintf(stderr, "[line %d] in script\n", line);
-	hoshi_resetStack(vm);
+
+	if (vm->errorHandler != NULL) {
+		fprintf(stderr, "delegating to error handler\n");
+		vm->errorHandler(vm);
+	} else {
+		fprintf(stderr, "hoshi_panic: warning: no error handler provided.\n");
+	}
 }
 
 void hoshi_push(hoshi_VM *vm, hoshi_Value value)
@@ -101,6 +120,7 @@ static void hoshi_concatenate(hoshi_VM *vm)
 	hoshi_push(vm, HOSHI_OBJECT(result));
 }
 
+/* TODO: Rename to hoshi_run(hoshi_VM *vm) */
 hoshi_InterpretResult hoshi_runNext(hoshi_VM *vm)
 {
 /* Macro shorthands. These get #undef'ed from existence after the for loop below. */
@@ -208,6 +228,22 @@ hoshi_InterpretResult hoshi_runNext(hoshi_VM *vm)
 				// hoshi_push(vm, value);
 				break;
 			}
+			case HOSHI_OP_DEFLOCAL: {
+				uint8_t index = READ_BYTE();
+				vm->locals[index].value = hoshi_pop(vm);
+				vm->locals[index].depth = vm->scopes - vm->topScope;
+				break;
+			}
+			case HOSHI_OP_SETLOCAL: {
+				vm->locals[READ_BYTE()].value = hoshi_peek(vm, 0);
+				break;
+			}
+			case HOSHI_OP_GETLOCAL: {
+				hoshi_push(vm, vm->locals[READ_BYTE()].value);
+				break;
+			}
+			case HOSHI_OP_NEWSCOPE: hoshi_pushScope(vm); break;
+			case HOSHI_OP_ENDSCOPE: hoshi_popScope(vm); break;
 			/* Math */
 			case HOSHI_OP_ADD: BINARY_OP(HOSHI_NUMBER, +); break;
 			case HOSHI_OP_SUB: BINARY_OP(HOSHI_NUMBER, -); break;
@@ -310,6 +346,40 @@ uint8_t hoshi_addGlobal(hoshi_VM *vm, hoshi_ObjectString *name)
 	hoshi_writeValueArray(&vm->globalValues, HOSHI_NIL);
 	hoshi_tableSet(&vm->globalNames, name, HOSHI_NUMBER((double)newIndex));
 	return newIndex;
+}
+
+uint8_t hoshi_addLocal(hoshi_VM *vm)
+{
+	return vm->localsTop++;
+}
+
+void hoshi_pushScope(hoshi_VM *vm)
+{
+	vm->topScope++;
+	hoshi_initScope(vm->topScope);
+}
+
+void hoshi_popScope(hoshi_VM *vm)
+{
+	int depth = vm->topScope - vm->scopes;
+	// printf("popscope %d, %d\n", vm->topScope->localCount, depth);
+	for (int i = 0; i < HOSHI_LOCALS_SIZE-1; i++) {
+		// printf("  i: %d/%d, %d\n", i, HOSHI_LOCALS_SIZE-1, vm->locals[i].depth);
+		if (vm->locals[i].depth > depth) {
+			hoshi_LocalValue *value = &vm->locals[i];
+			value->depth = 0;
+
+			// if (HOSHI_IS_OBJECT(value->value)) {
+			// 	hoshi_freeObject(HOSHI_AS_OBJECT(value->value));
+			// }
+			value->value = HOSHI_NIL;
+			// value->value.as.number = 0;
+			// value->value.type = HOSHI_TYPE_NIL;
+		}
+	}
+
+	vm->localsTop -= vm->topScope->localCount;
+	vm->topScope--;
 }
 
 #endif

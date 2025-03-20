@@ -206,6 +206,11 @@ static char *hir_readFile(const char *filePath)
 	return buffer;
 }
 
+static void handleError(hoshi_VM *vm)
+{
+	quit(vm->exitCode);
+}
+
 static void runFile(const char *path)
 {
 	char *source = hir_readFile(path);
@@ -221,11 +226,15 @@ static void runFile(const char *path)
 	/* Initialize VM */
 	hoshi_VM vm;
 	hoshi_initVM(&vm);
+	vm.errorHandler = &handleError;
 
 	/* Compile code */
 	hoshi_Chunk chunk;
 	hoshi_initChunk(&chunk);
-	hir_compileString(&vm, &chunk, source);
+	if (!hir_compileString(&vm, &chunk, source)) {
+		fprintf(stderr, "compilation failed, see above error(s)\n");
+		quit(1);
+	}
 
 	/* Execute code */
 	hoshi_InterpretResult result = hoshi_runChunk(&vm, &chunk);
@@ -264,7 +273,10 @@ static void compileFileToHoshi(const char *inputFilePath, const char *outputFile
 	puts("  | Compiling");
 	hoshi_Chunk chunk;
 	hoshi_initChunk(&chunk);
-	hir_compileString(&vm, &chunk, source);
+	if (!hir_compileString(&vm, &chunk, source)) {
+		fprintf(stderr, "compilation failed, see above error(s)\n");
+		quit(1);
+	}
 
 	/* Disassembly */
 	if (printDisasm) {

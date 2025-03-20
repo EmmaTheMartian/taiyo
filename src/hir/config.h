@@ -3,6 +3,12 @@
 
 /* Compiler Configuration */
 
+#ifndef HIR_LOCAL_STACK_SIZE
+	#define HIR_LOCAL_STACK_SIZE (UINT8_MAX + 1)
+#endif
+
+/* Debugging */
+
 #ifndef HIR_ENABLE_PRINT_CODE
 	/* Set to `1` to enable debugging information as the compiler runs. */
 	#define HIR_ENABLE_PRINT_CODE 0

@@ -157,7 +157,8 @@ static hir_TokenType hir_checkKeyword(hir_Lexer *lexer, int start, int length, c
 }
 
 /* Check for operators using a trie.
- * Never-nesters fear this function */
+ * Never-nesters fear this function.
+ * TODO: There's gotta be a way to make this not so... insane */
 static hir_TokenType hir_operatorType(hir_Lexer *lexer)
 {
 	switch (lexer->start[0]) {
@@ -175,7 +176,22 @@ static hir_TokenType hir_operatorType(hir_Lexer *lexer)
 			if (lexer->current - lexer->start > 1) {
 				switch (lexer->start[1]) {
 					case 'i': return hir_checkKeyword(lexer, 2, 1, "v", HIR_TOKEN_DIV);
-					case 'e': return hir_checkKeyword(lexer, 2, 7, "fglobal", HIR_TOKEN_DEFGLOBAL);
+					case 'e': {
+						if (lexer->current - lexer->start > 2) {
+							switch (lexer->start[2]) {
+								case 'f': {
+									if (lexer->current - lexer->start > 3) {
+										switch (lexer->start[3]) {
+											case 'g': return hir_checkKeyword(lexer, 4, 5, "lobal", HIR_TOKEN_DEFGLOBAL);
+											case 'l': return hir_checkKeyword(lexer, 4, 4, "ocal", HIR_TOKEN_DEFLOCAL);
+										}
+									}
+									break;
+								}
+							}
+						}
+						break;
+					}
 				}
 			}
 			break;
@@ -183,6 +199,7 @@ static hir_TokenType hir_operatorType(hir_Lexer *lexer)
 		case 'e': {
 			if (lexer->current - lexer->start > 1) {
 				switch (lexer->start[1]) {
+					case 'n': return hir_checkKeyword(lexer, 2, 6, "dscope", HIR_TOKEN_ENDSCOPE);
 					case 'x': return hir_checkKeyword(lexer, 2, 2, "it", HIR_TOKEN_EXIT);
 					case 'q': return HIR_TOKEN_EQ;
 				}
@@ -193,7 +210,22 @@ static hir_TokenType hir_operatorType(hir_Lexer *lexer)
 		case 'g': {
 			if (lexer->current - lexer->start > 1) {
 				switch (lexer->start[1]) {
-					case 'e': return hir_checkKeyword(lexer, 2, 7, "tglobal", HIR_TOKEN_GETGLOBAL);
+					case 'e': {
+						if (lexer->current - lexer->start > 2) {
+							switch (lexer->start[2]) {
+								case 't': {
+									if (lexer->current - lexer->start > 3) {
+										switch (lexer->start[3]) {
+											case 'g': return hir_checkKeyword(lexer, 4, 5, "lobal", HIR_TOKEN_GETGLOBAL);
+											case 'l': return hir_checkKeyword(lexer, 4, 4, "ocal", HIR_TOKEN_GETLOCAL);
+										}
+									}
+									break;
+								}
+							}
+						}
+						break;
+					}
 					case 't': {
 						if (hir_checkKeyword(lexer, 2, 2, "eq", HIR_TOKEN_GTEQ)) {
 							return HIR_TOKEN_GTEQ;
@@ -218,10 +250,11 @@ static hir_TokenType hir_operatorType(hir_Lexer *lexer)
 			if (lexer->current - lexer->start > 1) {
 				switch (lexer->start[1]) {
 					case 'e': {
-						if (lexer->current - lexer->start > 1) {
+						if (lexer->current - lexer->start > 2) {
 							switch (lexer->start[2]) {
 								case 'g': return hir_checkKeyword(lexer, 2, 4, "gate", HIR_TOKEN_NEGATE);
 								case 'q': return HIR_TOKEN_NEQ;
+								case 'w': return hir_checkKeyword(lexer, 3, 5, "scope", HIR_TOKEN_NEWSCOPE);
 							}
 						}
 						break;
@@ -247,7 +280,22 @@ static hir_TokenType hir_operatorType(hir_Lexer *lexer)
 		case 's': {
 			if (lexer->current - lexer->start > 1) {
 				switch (lexer->start[1]) {
-					case 'e': return hir_checkKeyword(lexer, 2, 7, "tglobal", HIR_TOKEN_SETGLOBAL);
+					case 'e': {
+						if (lexer->current - lexer->start > 2) {
+							switch (lexer->start[2]) {
+								case 't': {
+									if (lexer->current - lexer->start > 3) {
+										switch (lexer->start[3]) {
+											case 'g': return hir_checkKeyword(lexer, 4, 5, "lobal", HIR_TOKEN_SETGLOBAL);
+											case 'l': return hir_checkKeyword(lexer, 4, 4, "ocal", HIR_TOKEN_SETLOCAL);
+										}
+									}
+									break;
+								}
+							}
+						}
+						break;
+					}
 					case 'u': return hir_checkKeyword(lexer, 2, 1, "b", HIR_TOKEN_SUB);
 				}
 			}
@@ -287,8 +335,6 @@ hir_Token hir_scanToken(hir_Lexer *lexer)
 		return hir_number(lexer);
 	} else {
 		switch (c) {
-			case '.': return hir_makeToken(lexer, HIR_TOKEN_DOT);
-			case '=': return hir_makeToken(lexer, HIR_TOKEN_EQUALS);
 			case '$': return hir_identifier(lexer);
 			case '"': return hir_string(lexer);
 		}
@@ -300,10 +346,6 @@ hir_Token hir_scanToken(hir_Lexer *lexer)
 void hir_printToken(hir_Token *token)
 {
 	switch (token->type) {
-		/* Single characters */
-		case HIR_TOKEN_DOT: fputs("DOT", stdout); break;
-		case HIR_TOKEN_EQUALS: fputs("EQUALS", stdout); break;
-		case HIR_TOKEN_DOLLAR: fputs("DOLLAR", stdout); break;
 		/* Literals */
 		case HIR_TOKEN_ID: fputs("ID", stdout); break;
 		case HIR_TOKEN_TRUE: fputs("TRUE", stdout); break;
@@ -322,6 +364,11 @@ void hir_printToken(hir_Token *token)
                 case HIR_TOKEN_DEFGLOBAL: fputs("DEFGLOBAL", stdout); break;
                 case HIR_TOKEN_SETGLOBAL: fputs("SETGLOBAL", stdout); break;
                 case HIR_TOKEN_GETGLOBAL: fputs("GETGLOBAL", stdout); break;
+                case HIR_TOKEN_SETLOCAL: fputs("SETLOCAL", stdout); break;
+                case HIR_TOKEN_DEFLOCAL: fputs("DEFLOCAL", stdout); break;
+                case HIR_TOKEN_GETLOCAL: fputs("GETLOCAL", stdout); break;
+                case HIR_TOKEN_NEWSCOPE: fputs("NEWSCOPE", stdout); break;
+                case HIR_TOKEN_ENDSCOPE: fputs("ENDSCOPE", stdout); break;
                 case HIR_TOKEN_NOT: fputs("NOT", stdout); break;
 		case HIR_TOKEN_AND: fputs("AND", stdout); break;
 		case HIR_TOKEN_OR: fputs("OR", stdout); break;

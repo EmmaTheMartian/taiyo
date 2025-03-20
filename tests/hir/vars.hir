@@ -1,3 +1,5 @@
+0 defglobal $zero
+
 42 defglobal $the_meaning_of_life
 getglobal $the_meaning_of_life print
 "\n" print
@@ -6,4 +8,29 @@ getglobal $the_meaning_of_life print
 getglobal $the_meaning_of_life print
 "\n" print
 
-0 exit
+", " deflocal $comma
+"!" deflocal $exclamation
+"\n" deflocal $newline
+
+"Bozo"
+newscope
+	"Hello" deflocal $hello
+
+	newscope
+		"World" deflocal $world
+
+		getlocal $hello
+		getlocal $comma concat
+		getlocal $world concat
+		getlocal $exclamation concat
+		getlocal $newline concat
+	endscope
+	print
+endscope
+pop
+
+# newscope
+# 	getlocal $world getlocal $newline concat print
+# endscope
+
+getglobal $zero exit

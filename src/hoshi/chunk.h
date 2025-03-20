@@ -17,9 +17,17 @@ typedef enum {
 	HOSHI_OP_FALSE,
 	HOSHI_OP_NIL,
 	/* Variables */
+	/*       Globals */
 	HOSHI_OP_DEFGLOBAL,
 	HOSHI_OP_SETGLOBAL,
 	HOSHI_OP_GETGLOBAL,
+	/*       Locals */
+	HOSHI_OP_DEFLOCAL,
+	HOSHI_OP_SETLOCAL,
+	HOSHI_OP_GETLOCAL,
+	/*       Scopes */
+	HOSHI_OP_NEWSCOPE,
+	HOSHI_OP_ENDSCOPE,
 	/* Math */
 	HOSHI_OP_ADD,
 	HOSHI_OP_SUB,

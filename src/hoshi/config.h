@@ -12,6 +12,14 @@
 	#define HOSHI_STACK_SIZE 256
 #endif
 
+#ifndef HOSHI_LOCALS_SIZE
+	#define HOSHI_LOCALS_SIZE 256
+#endif
+
+#ifndef HOSHI_MAX_SCOPE_DEPTH
+	#define HOSHI_MAX_SCOPE_DEPTH 256
+#endif
+
 #ifndef HOSHI_ENABLE_GLOBAL_NAME_DUMP
 	/* Set to `1` to enable a dump of all global names when the VM starts. */
 	#define HOSHI_ENABLE_GLOBAL_NAME_DUMP 1

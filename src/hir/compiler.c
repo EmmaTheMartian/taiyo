@@ -7,23 +7,26 @@
 #include "../hoshi/value.h"
 #include "../hoshi/object.h"
 #include "../hoshi/common.h"
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
 
 #if HIR_ENABLE_PRINT_DISASSEMBLY
 #include "../hoshi/debug.h"
 #endif
 
-static void hir_errorAt(hir_Parser *parser, hir_Token *token, const char *message)
+static void hir_errorAt(hir_Parser *parser, hir_Token *token, const char *message, ...)
 {
 	if (parser->panicMode) {
 		return;
 	}
 	parser->panicMode = true;
 
-	fprintf(stderr, "[line %d] Error", token->line);
+	fprintf(stderr, "[line %d] error", token->line);
 
 	if (token->type == HIR_TOKEN_EOF) {
 		fputs(" at end", stderr);
@@ -33,18 +36,32 @@ static void hir_errorAt(hir_Parser *parser, hir_Token *token, const char *messag
 		fprintf(stderr, " at '%.*s'", token->length, token->start);
 	}
 
-	fprintf(stderr, ": %s\n", message);
+	fprintf(stderr, ": ");
+
+	va_list args;
+	va_start(args, message);
+	fprintf(stderr, message, args);
+	va_end(args);
+
+	fprintf(stderr, "\n");
+
 	parser->hadError = true;
 }
 
-static void hir_error(hir_Parser *parser, const char *message)
+static void hir_error(hir_Parser *parser, const char *message, ...)
 {
-	hir_errorAt(parser, &parser->previous, message);
+	va_list args;
+	va_start(args, message);
+	hir_errorAt(parser, &parser->previous, message, args);
+	va_end(args);
 }
 
-static void hir_errorAtCurrent(hir_Parser *parser, const char *message)
+static void hir_errorAtCurrent(hir_Parser *parser, const char *message, ...)
 {
+	va_list args;
+	va_start(args, message);
 	hir_errorAt(parser, &parser->current, message);
+	va_end(args);
 }
 
 static void hir_advance(hir_Parser *parser, hir_Lexer *lexer)
@@ -129,71 +146,51 @@ static void hir_emitConstant(hoshi_VM *vm, hir_Parser *parser, hoshi_Value value
 	}
 }
 
-static int hir_identifierConstant(hoshi_VM *vm, hir_Parser *parser, hir_Token *name)
+static bool hir_identifiersEqual(hir_Token *a, hir_Token *b)
 {
-	/* This key gets freed at the end of compilation. */
-	hoshi_ObjectString *key = hoshi_makeString(vm, false, (char *)name->start, name->length);
+	if (a->length != b->length) {
+		return false;
+	}
+	return memcmp(a->start, b->start, a->length) == 0;
+}
 
-	/* Check if it already exists */
-	// hoshi_Value indexValue;
-	// if (hoshi_tableGet(&parser->identifiers, key, &indexValue)) {
-	// 	return HOSHI_AS_NUMBER(indexValue);
-	// } else {
-	// 	uint8_t index = hir_makeConstant(vm, parser, HOSHI_OBJECT(hoshi_makeString(vm, false, (char *)name->start, name->length)));
-	// 	hoshi_tableSet(&parser->identifiers, key, HOSHI_NUMBER(index));
-	// 	return index;
-	// }
+static uint8_t hir_globalId(hoshi_VM *vm, hir_Parser *parser, hir_Lexer *lexer)
+{
+	hir_consume(parser, lexer, HIR_TOKEN_ID, "expected identifier");
+
+	/* This key gets freed at the end of compilation. */
+	hoshi_ObjectString *key = hoshi_makeString(vm, false, (char *)parser->previous.start, parser->previous.length);
 
 	return hoshi_addGlobal(vm, key);
 }
 
-static uint8_t hir_parseVariable(hoshi_VM *vm, hir_Parser *parser, hir_Lexer *lexer)
+static uint8_t hir_localId(hoshi_VM *vm, hir_Parser *parser, hir_Lexer *lexer, bool define)
 {
 	hir_consume(parser, lexer, HIR_TOKEN_ID, "expected identifier");
-	return hir_identifierConstant(vm, parser, &parser->previous);
-}
 
-static void hir_namedVariable(hoshi_VM *vm, hir_Parser *parser, hir_Token *token)
-{
-	int arg = hir_identifierConstant(vm, parser, token);
-	if (arg <= UINT8_MAX) {
-		hir_emitBytes2(parser, HIR_TOKEN_GETGLOBAL, arg);
-	} else if (arg <= UINT24_MAX) {
-		hir_emitByte(parser, HIR_TOKEN_GETGLOBAL);
-		hir_emitBytes3(
-			parser,
-			(uint8_t)(arg & 0xFF),
-			(uint8_t)(arg >> 8) & 0xFF,
-			(uint8_t)(arg >> 16) & 0xFF
-		);
-	} else {
-		/* this should never happen */
-		hoshi_panic(vm, "hir_namedVariable: constant id out of maximum range (UINT24_MAX)");
+	/* Check if the local already exists*/
+	for (int i = parser->currentCompiler->localCount - 1; i >= 0; i--) {
+		hir_LocalVariable *local = &parser->currentCompiler->locals[i];
+		if (hir_identifiersEqual(&parser->previous, &local->name)) {
+			if (define) {
+				hir_error(parser, "variable already exists in this scope.");
+				return -1;
+			}
+			return parser->currentCompiler->locals[i].index;
+		}
 	}
-}
 
-static void hir_variable(hoshi_VM *vm, hir_Parser *parser, hir_Lexer *lexer)
-{
-	hir_consume(parser, lexer, HIR_TOKEN_STRING, "expected string after `$`");
-	hir_namedVariable(vm, parser, &parser->previous);
-}
-
-static void hir_defglobal(hoshi_VM *vm, hir_Parser *parser, int global)
-{
-	if (global <= UINT8_MAX) {
-		hir_emitBytes2(parser, HOSHI_OP_DEFGLOBAL, global);
-	} else if (global <= UINT24_MAX) {
-		/* TODO */
-		// hir_emitByte(parser, HOSHI_OP_DEFGLOBAL_LONG);
-		// hir_emitBytes3(
-		// 	parser,
-		// 	(uint8_t)(global & 0xFF),
-		// 	(uint8_t)((global >> 8) & 0xFF),
-		// 	(uint8_t)((global >> 16) & 0xFF)
-		// );
-	} else {
-		hoshi_panic(vm, "too many globals in one chunk.");
+	if (!define) {
+		/* Variable doesn't exist and we aren't defining, so throw an error */
+		hir_error(parser, "variable does not exist");
 	}
+
+	/* Add the variable */
+	hir_LocalVariable *local = &parser->currentCompiler->locals[parser->currentCompiler->localCount++];
+	local->name = parser->previous;
+	local->depth = parser->currentCompiler->scopeDepth;
+	local->index = hoshi_addLocal(vm);
+	return local->index;
 }
 
 static void hir_number(hoshi_VM *vm, hir_Parser *parser)
@@ -217,7 +214,6 @@ static void hir_expression(hoshi_VM *vm, hir_Parser *parser, hir_Lexer *lexer)
 	hir_advance(parser, lexer);
 	switch (parser->previous.type) {
 		/* Values */
-		case HIR_TOKEN_DOLLAR: hir_variable(vm, parser, lexer); break;
 		case HIR_TOKEN_NUMBER: hir_number(vm, parser); break;
 		case HIR_TOKEN_STRING: hir_string(vm, parser); break;
 		case HIR_TOKEN_TRUE: hir_emitByte(parser, HOSHI_OP_TRUE); break;
@@ -230,9 +226,41 @@ static void hir_expression(hoshi_VM *vm, hir_Parser *parser, hir_Lexer *lexer)
 		case HIR_TOKEN_MUL: hir_emitByte(parser, HOSHI_OP_MUL); break;
 		case HIR_TOKEN_DIV: hir_emitByte(parser, HOSHI_OP_DIV); break;
 		case HIR_TOKEN_NEGATE: hir_emitByte(parser, HOSHI_OP_NEGATE); break;
-		case HIR_TOKEN_DEFGLOBAL: hir_defglobal(vm, parser, hir_parseVariable(vm, parser, lexer)); break;
-		case HIR_TOKEN_SETGLOBAL: hir_emitBytes2(parser, HOSHI_OP_SETGLOBAL, hir_parseVariable(vm, parser, lexer)); break;
-		case HIR_TOKEN_GETGLOBAL: hir_emitBytes2(parser, HOSHI_OP_GETGLOBAL, hir_parseVariable(vm, parser, lexer)); break;
+		case HIR_TOKEN_DEFGLOBAL:
+			hir_emitBytes2(parser, HOSHI_OP_DEFGLOBAL, hir_globalId(vm, parser, lexer));
+			break;
+		case HIR_TOKEN_SETGLOBAL:
+			hir_emitBytes2(parser, HOSHI_OP_SETGLOBAL, hir_globalId(vm, parser, lexer));
+			break;
+		case HIR_TOKEN_GETGLOBAL:
+			hir_emitBytes2(parser, HOSHI_OP_GETGLOBAL, hir_globalId(vm, parser, lexer));
+			break;
+		case HIR_TOKEN_DEFLOCAL:
+			hir_emitBytes2(parser, HOSHI_OP_DEFLOCAL, hir_localId(vm, parser, lexer, true));
+			break;
+		case HIR_TOKEN_SETLOCAL:
+			hir_emitBytes2(parser, HOSHI_OP_SETLOCAL, hir_localId(vm, parser, lexer, false));
+			break;
+		case HIR_TOKEN_GETLOCAL:
+			hir_emitBytes2(parser, HOSHI_OP_GETLOCAL, hir_localId(vm, parser, lexer, false));
+			break;
+		case HIR_TOKEN_NEWSCOPE:
+			hir_emitByte(parser, HOSHI_OP_NEWSCOPE);
+			parser->currentCompiler->scopeDepth++;
+			break;
+		case HIR_TOKEN_ENDSCOPE:
+			hir_emitByte(parser, HOSHI_OP_ENDSCOPE);
+			parser->currentCompiler->scopeDepth--;
+
+			/* Remove old locals */
+			while (
+				parser->currentCompiler->localCount > 0 &&
+				parser->currentCompiler->locals[parser->currentCompiler->localCount - 1].depth > parser->currentCompiler->scopeDepth
+			) {
+				parser->currentCompiler->localCount--;
+			}
+
+			break;
 		case HIR_TOKEN_NOT: hir_emitByte(parser, HOSHI_OP_NOT); break;
 		case HIR_TOKEN_AND: hir_emitByte(parser, HOSHI_OP_AND); break;
 		case HIR_TOKEN_OR: hir_emitByte(parser, HOSHI_OP_OR); break;
@@ -248,8 +276,15 @@ static void hir_expression(hoshi_VM *vm, hir_Parser *parser, hir_Lexer *lexer)
 		case HIR_TOKEN_RETURN: hir_emitByte(parser, HOSHI_OP_RETURN); break;
 		case HIR_TOKEN_EXIT: hir_emitByte(parser, HOSHI_OP_EXIT); break;
 		default:
-			fprintf(stderr, "parser error: invalid token type for expression: %d (this error should never occur, please report it)\n", parser->previous.type);
+			hir_errorAtCurrent(parser, "invalid token type for expression: %d (this error should never happen, please report it)", parser->previous.type);
         }
+}
+
+static void hir_initCompiler(hir_Parser *parser, hir_Compiler *compiler)
+{
+	compiler->localCount = 0;
+	compiler->scopeDepth = 0;
+	parser->currentCompiler = compiler;
 }
 
 bool hir_compileString(hoshi_VM *vm, hoshi_Chunk *chunk, const char *string)
@@ -263,6 +298,8 @@ bool hir_compileString(hoshi_VM *vm, hoshi_Chunk *chunk, const char *string)
 	parser.panicMode = false;
 	parser.currentChunk = chunk;
 	hoshi_initTable(&parser.identifiers);
+	hir_Compiler compiler;
+	hir_initCompiler(&parser, &compiler);
 
 	parser.previous.line = 1;
 	parser.current.line = 1;

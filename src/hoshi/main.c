@@ -168,6 +168,11 @@ static void nop()
 }
 #endif
 
+static void handleError(hoshi_VM *vm)
+{
+	quit(vm->exitCode);
+}
+
 static void runFile(const char *path)
 {
 	FILE *file = fopen(path, "rb");
@@ -179,6 +184,7 @@ static void runFile(const char *path)
 	/* Initialize VM */
 	hoshi_VM vm;
 	hoshi_initVM(&vm);
+	vm.errorHandler = &handleError;
 
 	/* Load chunk */
 	hoshi_Chunk chunk;
@@ -215,6 +221,7 @@ static void disassembleFile(const char *path)
 	/* Initialize VM */
 	hoshi_VM vm;
 	hoshi_initVM(&vm);
+	vm.errorHandler = &handleError;
 
 	/* Load chunk */
 	puts("  | Loading");

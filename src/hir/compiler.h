@@ -3,8 +3,21 @@
 
 #include "../hoshi/chunk.h"
 #include "../hoshi/vm.h"
+#include "config.h"
 #include "lexer.h"
 #include <stdbool.h>
+
+typedef struct {
+	hir_Token name;
+	int depth;
+	int index;
+} hir_LocalVariable;
+
+typedef struct {
+	hir_LocalVariable locals[HIR_LOCAL_STACK_SIZE];
+	int localCount;
+	int scopeDepth;
+} hir_Compiler;
 
 typedef struct {
 	hir_Token current;
@@ -13,6 +26,7 @@ typedef struct {
 	bool panicMode;
 	hoshi_Chunk *currentChunk;
 	hoshi_Table identifiers;
+	hir_Compiler *currentCompiler;
 } hir_Parser;
 
 /* Compile the given string. */
