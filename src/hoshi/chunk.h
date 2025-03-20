@@ -28,6 +28,12 @@ typedef enum {
 	/*       Scopes */
 	HOSHI_OP_NEWSCOPE,
 	HOSHI_OP_ENDSCOPE,
+	/* Control Flow */
+	HOSHI_OP_JUMP,
+	HOSHI_OP_BACK_JUMP,
+	HOSHI_OP_JUMP_IF,
+	HOSHI_OP_BACK_JUMP_IF,
+	//TODO: Absolute jumps and labelled jumps
 	/* Math */
 	HOSHI_OP_ADD,
 	HOSHI_OP_SUB,

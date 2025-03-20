@@ -125,6 +125,7 @@ hoshi_InterpretResult hoshi_runNext(hoshi_VM *vm)
 {
 /* Macro shorthands. These get #undef'ed from existence after the for loop below. */
 #define READ_BYTE() (*vm->ip++)
+#define READ_SHORT() (*vm->ip += 2, (uint16_t)((vm->ip[-2] << 8) | vm->ip[-1]))
 #define READ_CONSTANT() (vm->chunk->constants.values[READ_BYTE()])
 #define READ_STRING() HOSHI_AS_STRING(READ_CONSTANT())
 #define BINARY_OP(valueType, op)\
@@ -244,6 +245,25 @@ hoshi_InterpretResult hoshi_runNext(hoshi_VM *vm)
 			}
 			case HOSHI_OP_NEWSCOPE: hoshi_pushScope(vm); break;
 			case HOSHI_OP_ENDSCOPE: hoshi_popScope(vm); break;
+			/* Control flow */
+			case HOSHI_OP_JUMP: vm->ip += READ_SHORT(); break;
+			case HOSHI_OP_BACK_JUMP: vm->ip -= READ_SHORT(); break;
+			case HOSHI_OP_JUMP_IF: {
+				hoshi_Value value = hoshi_pop(vm);
+				uint16_t offset = READ_SHORT();
+				if (HOSHI_IS_BOOL(value) && HOSHI_AS_BOOL(value)) {
+					vm->ip += offset;
+				}
+				break;
+			}
+			case HOSHI_OP_BACK_JUMP_IF: {
+				hoshi_Value value = hoshi_pop(vm);
+				uint16_t offset = READ_SHORT();
+				if (HOSHI_IS_BOOL(value) && HOSHI_AS_BOOL(value)) {
+					vm->ip -= offset;
+				}
+				break;
+			}
 			/* Math */
 			case HOSHI_OP_ADD: BINARY_OP(HOSHI_NUMBER, +); break;
 			case HOSHI_OP_SUB: BINARY_OP(HOSHI_NUMBER, -); break;
@@ -312,6 +332,7 @@ hoshi_InterpretResult hoshi_runNext(hoshi_VM *vm)
 	return HOSHI_INTERPRET_OK;
 
 #undef READ_BYTE
+#undef READ_SHORT
 #undef READ_CONSTANT
 #undef READ_STRING
 #undef BINARY_OP

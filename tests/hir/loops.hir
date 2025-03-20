@@ -1,0 +1,6 @@
+0 deflocal $i
+
+.loop
+i 1 add setlocal $i
+"Hello, World!\n" print
+back_jump_if .loop

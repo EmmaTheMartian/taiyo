@@ -171,6 +171,14 @@ static hir_TokenType hir_operatorType(hir_Lexer *lexer)
 			}
 			break;
 		}
+		case 'b': {
+			if (hir_checkKeyword(lexer, 1, 8, "ack_jump", HIR_TOKEN_BACK_JUMP) == HIR_TOKEN_BACK_JUMP) {
+				return HIR_TOKEN_BACK_JUMP;
+			} else if (hir_checkKeyword(lexer, 1, 11, "ack_jump_if", HIR_TOKEN_BACK_JUMP_IF) == HIR_TOKEN_BACK_JUMP_IF) {
+				return HIR_TOKEN_BACK_JUMP_IF;
+			}
+			break;
+		}
 		case 'c': return hir_checkKeyword(lexer, 1, 5, "oncat", HIR_TOKEN_CONCAT);
 		case 'd': {
 			if (lexer->current - lexer->start > 1) {
@@ -227,7 +235,7 @@ static hir_TokenType hir_operatorType(hir_Lexer *lexer)
 						break;
 					}
 					case 't': {
-						if (hir_checkKeyword(lexer, 2, 2, "eq", HIR_TOKEN_GTEQ)) {
+						if (hir_checkKeyword(lexer, 2, 2, "eq", HIR_TOKEN_GTEQ) == HIR_TOKEN_GTEQ) {
 							return HIR_TOKEN_GTEQ;
 						}
 						return hir_checkKeyword(lexer, 1, 1, "t", HIR_TOKEN_GT);
@@ -236,9 +244,17 @@ static hir_TokenType hir_operatorType(hir_Lexer *lexer)
 			}
 			break;
 		}
+		case 'j': {
+			if (hir_checkKeyword(lexer, 1, 3, "ump", HIR_TOKEN_JUMP) == HIR_TOKEN_JUMP) {
+				return HIR_TOKEN_JUMP;
+			} else if (hir_checkKeyword(lexer, 1, 6, "ump_if", HIR_TOKEN_JUMP_IF) == HIR_TOKEN_JUMP_IF) {
+				return HIR_TOKEN_JUMP_IF;
+			}
+			break;
+		}
 		case 'l': {
 			if (lexer->current - lexer->start > 1) {
-				if (hir_checkKeyword(lexer, 1, 3, "teq", HIR_TOKEN_LTEQ)) {
+				if (hir_checkKeyword(lexer, 1, 3, "teq", HIR_TOKEN_LTEQ) == HIR_TOKEN_LTEQ) {
 					return HIR_TOKEN_LTEQ;
 				}
 				return hir_checkKeyword(lexer, 1, 1, "t", HIR_TOKEN_LT);
@@ -276,7 +292,7 @@ static hir_TokenType hir_operatorType(hir_Lexer *lexer)
 			}
 			break;
 		}
-		case 'r': return hir_checkKeyword(lexer, 1, 5, "eturn", HIR_TOKEN_RETURN);
+		case 'r': return hir_checkKeyword(lexer, 1, 4, "turn", HIR_TOKEN_RETURN);
 		case 's': {
 			if (lexer->current - lexer->start > 1) {
 				switch (lexer->start[1]) {

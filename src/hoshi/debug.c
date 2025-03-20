@@ -56,7 +56,7 @@ static int hoshi_constantInstruction(const char *name, hoshi_Chunk *chunk, int o
 
 static int hoshi_longConstantInstruction(const char *name, hoshi_Chunk *chunk, int offset)
 {
-	uint8_t constant = (
+	int constant = (
 		chunk->code[offset + 1] |
 		(chunk->code[offset + 2] << 8) |
 		(chunk->code[offset + 3] << 16)
@@ -69,6 +69,16 @@ static int hoshi_longConstantInstruction(const char *name, hoshi_Chunk *chunk, i
 		hoshi_printValue(chunk->constants.values[constant]);
 		puts("'");
 	}
+	return offset + 4;
+}
+
+static int hoshi_doubleArgInstruction(const char *name, hoshi_Chunk *chunk, int offset)
+{
+	uint16_t arg = (
+		chunk->code[offset + 1] |
+		(chunk->code[offset + 2] << 8)
+	);
+	printf("%-16s      '%d'", name, arg);
 	return offset + 4;
 }
 
@@ -108,6 +118,11 @@ int hoshi_disassembleInstruction(hoshi_Chunk *chunk, int offset)
 		case HOSHI_OP_GETLOCAL: return hoshi_singleArgInstruction("GETLOCAL", chunk, offset);
 		case HOSHI_OP_NEWSCOPE: return hoshi_simpleInstruction("NEWSCOPE", offset);
 		case HOSHI_OP_ENDSCOPE: return hoshi_simpleInstruction("ENDSCOPE", offset);
+		/* Control Flow */
+		case HOSHI_OP_JUMP: return hoshi_doubleArgInstruction("JUMP", chunk, offset);
+		case HOSHI_OP_BACK_JUMP: return hoshi_doubleArgInstruction("BACK_JUMP", chunk, offset);
+		case HOSHI_OP_JUMP_IF: return hoshi_doubleArgInstruction("JUMP_IF", chunk, offset);
+		case HOSHI_OP_BACK_JUMP_IF: return hoshi_doubleArgInstruction("BACK_JUMP_IF", chunk, offset);
 		/* Math */
 		case HOSHI_OP_ADD: return hoshi_simpleInstruction("ADD", offset);
 		case HOSHI_OP_SUB: return hoshi_simpleInstruction("SUB", offset);
