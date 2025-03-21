@@ -14,12 +14,20 @@ typedef struct {
 } hir_LocalVariable;
 
 typedef struct {
+	hir_Token name;
+	int pos;
+} hir_Label;
+
+typedef struct {
 	hir_LocalVariable locals[HIR_LOCAL_STACK_SIZE];
 	int localCount;
 	int scopeDepth;
+	hir_Label *labels;
+	int labelCount;
 } hir_Compiler;
 
 typedef struct {
+	size_t bytePos;
 	hir_Token current;
 	hir_Token previous;
 	bool hadError;

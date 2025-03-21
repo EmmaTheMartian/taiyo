@@ -148,6 +148,18 @@ static hir_Token hir_identifier(hir_Lexer *lexer)
 	return hir_makeToken(lexer, HIR_TOKEN_ID);
 }
 
+static hir_Token hir_label(hir_Lexer *lexer)
+{
+	/* skip the `:` */
+	lexer->start++;
+
+	while (isValidID(hir_peek(lexer))) {
+		hir_skip(lexer);
+	}
+
+	return hir_makeToken(lexer, HIR_TOKEN_ID);
+}
+
 static hir_TokenType hir_checkKeyword(hir_Lexer *lexer, int start, int length, const char *rest, hir_TokenType type)
 {
 	if (lexer->current - lexer->start == start + length && memcmp(lexer->start + start, rest, length) == 0) {
@@ -233,6 +245,12 @@ static hir_TokenType hir_operatorType(hir_Lexer *lexer)
 							}
 						}
 						break;
+					}
+					case 'o': {
+						if (hir_checkKeyword(lexer, 2, 5, "to_if", HIR_TOKEN_GOTO_IF) == HIR_TOKEN_GOTO_IF) {
+							return HIR_TOKEN_GOTO_IF;
+						}
+						return hir_checkKeyword(lexer, 2, 2, "to", HIR_TOKEN_GOTO);
 					}
 					case 't': {
 						if (hir_checkKeyword(lexer, 2, 2, "eq", HIR_TOKEN_GTEQ) == HIR_TOKEN_GTEQ) {
@@ -351,6 +369,7 @@ hir_Token hir_scanToken(hir_Lexer *lexer)
 		return hir_number(lexer);
 	} else {
 		switch (c) {
+			case ':': return hir_label(lexer);
 			case '$': return hir_identifier(lexer);
 			case '"': return hir_string(lexer);
 		}
@@ -363,6 +382,7 @@ void hir_printToken(hir_Token *token)
 {
 	switch (token->type) {
 		/* Literals */
+		case HIR_TOKEN_LABEL: fputs("LABEL", stdout); break;
 		case HIR_TOKEN_ID: fputs("ID", stdout); break;
 		case HIR_TOKEN_TRUE: fputs("TRUE", stdout); break;
 		case HIR_TOKEN_FALSE: fputs("FALSE", stdout); break;
@@ -385,6 +405,12 @@ void hir_printToken(hir_Token *token)
                 case HIR_TOKEN_GETLOCAL: fputs("GETLOCAL", stdout); break;
                 case HIR_TOKEN_NEWSCOPE: fputs("NEWSCOPE", stdout); break;
                 case HIR_TOKEN_ENDSCOPE: fputs("ENDSCOPE", stdout); break;
+		case HIR_TOKEN_JUMP: fputs("JUMP", stdout); break;
+		case HIR_TOKEN_JUMP_IF: fputs("JUMP_IF", stdout); break;
+		case HIR_TOKEN_BACK_JUMP: fputs("BACK_JUMP", stdout); break;
+		case HIR_TOKEN_BACK_JUMP_IF: fputs("BACK_JUMP_IF", stdout); break;
+		case HIR_TOKEN_GOTO: fputs("GOTO", stdout); break;
+		case HIR_TOKEN_GOTO_IF: fputs("GOTO_IF", stdout); break;
                 case HIR_TOKEN_NOT: fputs("NOT", stdout); break;
 		case HIR_TOKEN_AND: fputs("AND", stdout); break;
 		case HIR_TOKEN_OR: fputs("OR", stdout); break;

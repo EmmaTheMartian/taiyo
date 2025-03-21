@@ -93,6 +93,7 @@ static void hir_consume(hir_Parser *parser, hir_Lexer *lexer, hir_TokenType type
 static void hir_emitByte(hir_Parser *parser, uint8_t byte)
 {
 	hoshi_writeChunk(parser->currentChunk, byte, parser->previous.line);
+	parser->bytePos++;
 }
 
 static void hir_emitBytes2(hir_Parser *parser, uint8_t byte1, uint8_t byte2)
@@ -106,6 +107,14 @@ static void hir_emitBytes3(hir_Parser *parser, uint8_t byte1, uint8_t byte2, uin
 	hir_emitByte(parser, byte1);
 	hir_emitByte(parser, byte2);
 	hir_emitByte(parser, byte3);
+}
+
+static void hir_emitLong(hir_Parser *parser, uint64_t value)
+{
+	hir_emitByte(parser, value & 0xFF);
+	hir_emitByte(parser, (value >> 8) & 0xFF);
+	hir_emitByte(parser, (value >> 16) & 0xFF);
+	hir_emitByte(parser, (value >> 24) & 0xFF);
 }
 
 static void hir_endCompiler(hir_Parser *parser)
@@ -193,6 +202,29 @@ static uint8_t hir_localId(hoshi_VM *vm, hir_Parser *parser, hir_Lexer *lexer, b
 	return local->index;
 }
 
+static uint64_t hir_label(hoshi_VM *vm, hir_Parser *parser, bool define)
+{
+	if (define) {
+		hir_Label *label = &parser->currentCompiler->labels[parser->currentCompiler->labelCount++];
+		label->name = parser->previous;
+		label->pos = parser->bytePos;
+		return parser->bytePos;
+	} else {
+		/* find the label by name
+		 * TODO: I should use a hash map for this */
+		hir_Token *name = &parser->previous;
+		hir_Label *label;
+		for (int i = 0; i < parser->currentCompiler->labelCount; i++) {
+			label = &parser->currentCompiler->labels[i];
+			if (hir_identifiersEqual(name, &label->name)) {
+				return label->pos;
+			}
+		}
+		hir_error(parser, "undefined label");
+		return -1;
+	}
+}
+
 static void hir_number(hoshi_VM *vm, hir_Parser *parser)
 {
 	hir_emitConstant(vm, parser, HOSHI_NUMBER(strtod(parser->previous.start, NULL)));
@@ -214,6 +246,7 @@ static void hir_expression(hoshi_VM *vm, hir_Parser *parser, hir_Lexer *lexer)
 	hir_advance(parser, lexer);
 	switch (parser->previous.type) {
 		/* Values */
+		case HIR_TOKEN_LABEL: hir_label(vm, parser, true); break;
 		case HIR_TOKEN_NUMBER: hir_number(vm, parser); break;
 		case HIR_TOKEN_STRING: hir_string(vm, parser); break;
 		case HIR_TOKEN_TRUE: hir_emitByte(parser, HOSHI_OP_TRUE); break;
@@ -261,6 +294,56 @@ static void hir_expression(hoshi_VM *vm, hir_Parser *parser, hir_Lexer *lexer)
 			}
 
 			break;
+		case HIR_TOKEN_JUMP: {
+			long offset = strtol(parser->current.start, (char **)&parser->current.start[parser->current.length], 10);
+			hir_advance(parser, lexer);
+			hir_advance(parser, lexer);
+			if (offset >= UINT16_MAX) {
+				hir_error(parser, "attempting to jump too far (max is UINT16_MAX)");
+			}
+			hir_emitBytes3(parser, HOSHI_OP_JUMP, offset & 0xFF, (offset >> 8) & 0xFF);
+			break;
+		}
+		case HIR_TOKEN_JUMP_IF: {
+			long offset = strtol(parser->current.start, (char **)&parser->current.start[parser->current.length], 10);
+			hir_advance(parser, lexer);
+			hir_advance(parser, lexer);
+			if (offset >= UINT16_MAX) {
+				hir_error(parser, "attempting to jump too far (max is UINT16_MAX)");
+			}
+			hir_emitBytes3(parser, HOSHI_OP_JUMP_IF, offset & 0xFF, (offset >> 8) & 0xFF);
+			break;
+		}
+		case HIR_TOKEN_BACK_JUMP: {
+			long offset = -strtol(parser->current.start, (char **)&parser->current.start[parser->current.length], 10);
+			hir_advance(parser, lexer);
+			hir_advance(parser, lexer);
+			if (offset >= UINT16_MAX) {
+				hir_error(parser, "attempting to jump too far (max is UINT16_MAX)");
+			}
+			hir_emitBytes3(parser, HOSHI_OP_JUMP, offset & 0xFF, (offset >> 8) & 0xFF);
+			break;
+		}
+		case HIR_TOKEN_BACK_JUMP_IF: {
+			long offset = -strtol(parser->current.start, (char **)&parser->current.start[parser->current.length], 10);
+			hir_advance(parser, lexer);
+			hir_advance(parser, lexer);
+			if (offset >= UINT16_MAX) {
+				hir_error(parser, "attempting to jump too far (max is UINT16_MAX)");
+			}
+			hir_emitBytes3(parser, HOSHI_OP_JUMP_IF, offset & 0xFF, (offset >> 8) & 0xFF);
+			break;
+		}
+		case HIR_TOKEN_GOTO: {
+			hir_emitByte(parser, HOSHI_OP_GOTO);
+			hir_emitLong(parser, hir_label(vm, parser, false));
+			break;
+		}
+		case HIR_TOKEN_GOTO_IF: {
+			hir_emitByte(parser, HOSHI_OP_GOTO_IF);
+			hir_emitLong(parser, hir_label(vm, parser, false));
+			break;
+		}
 		case HIR_TOKEN_NOT: hir_emitByte(parser, HOSHI_OP_NOT); break;
 		case HIR_TOKEN_AND: hir_emitByte(parser, HOSHI_OP_AND); break;
 		case HIR_TOKEN_OR: hir_emitByte(parser, HOSHI_OP_OR); break;
@@ -284,6 +367,7 @@ static void hir_initCompiler(hir_Parser *parser, hir_Compiler *compiler)
 {
 	compiler->localCount = 0;
 	compiler->scopeDepth = 0;
+	compiler->labels = HOSHI_ALLOCATE(hir_Label, 256);
 	parser->currentCompiler = compiler;
 }
 
@@ -294,6 +378,7 @@ bool hir_compileString(hoshi_VM *vm, hoshi_Chunk *chunk, const char *string)
 
 	hir_initLexer(&lexer, string);
 
+	parser.bytePos = 0;
 	parser.hadError = false;
 	parser.panicMode = false;
 	parser.currentChunk = chunk;
@@ -311,6 +396,8 @@ bool hir_compileString(hoshi_VM *vm, hoshi_Chunk *chunk, const char *string)
 			break;
 		}
 	}
+
+	HOSHI_FREE_ARRAY(hir_Label, compiler.labels, compiler.labelCount);
 
 	hir_endCompiler(&parser);
 	hoshi_freeTable(&parser.identifiers);

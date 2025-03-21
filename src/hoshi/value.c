@@ -4,7 +4,6 @@
 #include "value.h"
 #include "object.h"
 #include <stdio.h>
-#include <string.h>
 
 void hoshi_printValue(hoshi_Value value)
 {

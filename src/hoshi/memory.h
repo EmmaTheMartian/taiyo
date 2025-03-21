@@ -4,7 +4,7 @@
 #include <stddef.h>
 
 /* Allocator macro */
-#define HOSHI_ALLOCATE(type, count) (type *)hoshi_realloc(NULL, 0, sizeof(type) * count);
+#define HOSHI_ALLOCATE(type, count) (type *)hoshi_realloc(NULL, 0, sizeof(type) * count)
 
 /* Frees the given object. */
 #define HOSHI_FREE(type, pointer) hoshi_realloc(pointer, sizeof(type), 0)

@@ -126,6 +126,7 @@ hoshi_InterpretResult hoshi_runNext(hoshi_VM *vm)
 /* Macro shorthands. These get #undef'ed from existence after the for loop below. */
 #define READ_BYTE() (*vm->ip++)
 #define READ_SHORT() (*vm->ip += 2, (uint16_t)((vm->ip[-2] << 8) | vm->ip[-1]))
+#define READ_LONG() (*vm->ip += 4, (uint64_t)((vm->ip[-4] << 24) | (vm->ip[-3] << 16) | (vm->ip[-2] << 8) | vm->ip[-1]))
 #define READ_CONSTANT() (vm->chunk->constants.values[READ_BYTE()])
 #define READ_STRING() HOSHI_AS_STRING(READ_CONSTANT())
 #define BINARY_OP(valueType, op)\
@@ -261,6 +262,18 @@ hoshi_InterpretResult hoshi_runNext(hoshi_VM *vm)
 				uint16_t offset = READ_SHORT();
 				if (HOSHI_IS_BOOL(value) && HOSHI_AS_BOOL(value)) {
 					vm->ip -= offset;
+				}
+				break;
+			}
+			case HOSHI_OP_GOTO: {
+				vm->ip = &vm->chunk->code[READ_LONG()];
+				break;
+			}
+			case HOSHI_OP_GOTO_IF: {
+				hoshi_Value value = hoshi_pop(vm);
+				uint64_t pos = READ_LONG();
+				if (HOSHI_IS_BOOL(value) && HOSHI_AS_BOOL(value)) {
+					vm->ip = &vm->chunk->code[pos];
 				}
 				break;
 			}

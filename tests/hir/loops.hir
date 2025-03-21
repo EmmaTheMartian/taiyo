@@ -1,6 +1,7 @@
 0 deflocal $i
 
-.loop
-i 1 add setlocal $i
+:loop
 "Hello, World!\n" print
-back_jump_if .loop
+i 1 add setlocal $i 10 eq goto_if :loop
+
+0 exit

@@ -72,17 +72,29 @@ static int hoshi_longConstantInstruction(const char *name, hoshi_Chunk *chunk, i
 	return offset + 4;
 }
 
-static int hoshi_doubleArgInstruction(const char *name, hoshi_Chunk *chunk, int offset)
+static int hoshi_longArgInstruction(const char *name, hoshi_Chunk *chunk, int offset)
+{
+	uint64_t arg = (
+		chunk->code[offset + 1] |
+		(chunk->code[offset + 2] << 8) |
+		(chunk->code[offset + 3] << 16) |
+		(chunk->code[offset + 4] << 24)
+	);
+	printf("%-16s      '%zu'", name, arg);
+	return offset + 5;
+}
+
+static int hoshi_shortArgInstruction(const char *name, hoshi_Chunk *chunk, int offset)
 {
 	uint16_t arg = (
 		chunk->code[offset + 1] |
 		(chunk->code[offset + 2] << 8)
 	);
 	printf("%-16s      '%d'", name, arg);
-	return offset + 4;
+	return offset + 3;
 }
 
-static int hoshi_singleArgInstruction(const char *name, hoshi_Chunk *chunk, int offset)
+static int hoshi_byteArgInstruction(const char *name, hoshi_Chunk *chunk, int offset)
 {
 	printf("%-16s      '%d'\n", name, chunk->code[offset + 1]);
 	return offset + 2;
@@ -102,7 +114,7 @@ int hoshi_disassembleInstruction(hoshi_Chunk *chunk, int offset)
 	uint8_t instruction = chunk->code[offset];
 	switch (instruction) {
 		/* Stack ops */
-		case HOSHI_OP_PUSH: return hoshi_singleArgInstruction("PUSH", chunk, offset);
+		case HOSHI_OP_PUSH: return hoshi_byteArgInstruction("PUSH", chunk, offset);
 		case HOSHI_OP_POP: return hoshi_simpleInstruction("POP", offset);
 		case HOSHI_OP_CONSTANT: return hoshi_constantInstruction("CONSTANT", chunk, offset);
 		case HOSHI_OP_CONSTANT_LONG: return hoshi_longConstantInstruction("CONSTANT_LONG", chunk, offset);
@@ -113,16 +125,18 @@ int hoshi_disassembleInstruction(hoshi_Chunk *chunk, int offset)
 		case HOSHI_OP_DEFGLOBAL: return hoshi_constantInstruction("DEFGLOBAL", chunk, offset);
 		case HOSHI_OP_SETGLOBAL: return hoshi_constantInstruction("SETGLOBAL", chunk, offset);
 		case HOSHI_OP_GETGLOBAL: return hoshi_constantInstruction("GETGLOBAL", chunk, offset);
-		case HOSHI_OP_DEFLOCAL: return hoshi_singleArgInstruction("DEFLOCAL", chunk, offset);
-		case HOSHI_OP_SETLOCAL: return hoshi_singleArgInstruction("SETLOCAL", chunk, offset);
-		case HOSHI_OP_GETLOCAL: return hoshi_singleArgInstruction("GETLOCAL", chunk, offset);
+		case HOSHI_OP_DEFLOCAL: return hoshi_byteArgInstruction("DEFLOCAL", chunk, offset);
+		case HOSHI_OP_SETLOCAL: return hoshi_byteArgInstruction("SETLOCAL", chunk, offset);
+		case HOSHI_OP_GETLOCAL: return hoshi_byteArgInstruction("GETLOCAL", chunk, offset);
 		case HOSHI_OP_NEWSCOPE: return hoshi_simpleInstruction("NEWSCOPE", offset);
 		case HOSHI_OP_ENDSCOPE: return hoshi_simpleInstruction("ENDSCOPE", offset);
 		/* Control Flow */
-		case HOSHI_OP_JUMP: return hoshi_doubleArgInstruction("JUMP", chunk, offset);
-		case HOSHI_OP_BACK_JUMP: return hoshi_doubleArgInstruction("BACK_JUMP", chunk, offset);
-		case HOSHI_OP_JUMP_IF: return hoshi_doubleArgInstruction("JUMP_IF", chunk, offset);
-		case HOSHI_OP_BACK_JUMP_IF: return hoshi_doubleArgInstruction("BACK_JUMP_IF", chunk, offset);
+		case HOSHI_OP_JUMP: return hoshi_shortArgInstruction("JUMP", chunk, offset);
+		case HOSHI_OP_BACK_JUMP: return hoshi_shortArgInstruction("BACK_JUMP", chunk, offset);
+		case HOSHI_OP_JUMP_IF: return hoshi_shortArgInstruction("JUMP_IF", chunk, offset);
+		case HOSHI_OP_BACK_JUMP_IF: return hoshi_shortArgInstruction("BACK_JUMP_IF", chunk, offset);
+		case HOSHI_OP_GOTO: return hoshi_longArgInstruction("GOTO", chunk, offset);
+		case HOSHI_OP_GOTO_IF: return hoshi_longArgInstruction("GOTO_IF", chunk, offset);
 		/* Math */
 		case HOSHI_OP_ADD: return hoshi_simpleInstruction("ADD", offset);
 		case HOSHI_OP_SUB: return hoshi_simpleInstruction("SUB", offset);

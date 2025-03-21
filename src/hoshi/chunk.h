@@ -33,6 +33,8 @@ typedef enum {
 	HOSHI_OP_BACK_JUMP,
 	HOSHI_OP_JUMP_IF,
 	HOSHI_OP_BACK_JUMP_IF,
+	HOSHI_OP_GOTO,
+	HOSHI_OP_GOTO_IF,
 	//TODO: Absolute jumps and labelled jumps
 	/* Math */
 	HOSHI_OP_ADD,
